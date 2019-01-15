@@ -1,0 +1,7 @@
+[package]
+name = "theseus"
+version = "0.1.0"
+authors = ["Richard Schneider <rschneider@harding.edu>"]
+edition = "2018"
+
+[dependencies]
