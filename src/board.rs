@@ -13,13 +13,6 @@ impl Player {
     }
 }
 
-enum Direction {
-    North,
-    South,
-    East,
-    West,
-}
-
 /// squares are numbered, rows then columns, starting at a1
 pub fn sqnum_for_coord(col: char, row: u8) -> u8 {
     (row - 1) * 9 + (col as u8) - 97
