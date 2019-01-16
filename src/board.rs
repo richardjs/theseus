@@ -55,32 +55,44 @@ impl Board {
         let se_wall = (pawn / 9) * 8 + (pawn % 9);
         let sw_wall = if se_wall > 0 { se_wall - 1 } else { 0 };
         let nw_wall = if se_wall > 9 { se_wall - 10 } else { 0 };
-        let ne_wall = nw_wall + 9;
+        let ne_wall = nw_wall + 1;
         // TODO wall blocking
         // TODO hopping over pawns
         // North
-        if pawn > 8 {
+        if pawn > 8
+            && (pawn % 9 == 0 || ((1 << nw_wall) & self.hwalls) == 0)
+            && ((pawn + 1) % 9 == 0 || ((1 << ne_wall) & self.hwalls) == 0)
+        {
             let mut child = self.clone();
             child.pawns[turn] = pawn - 9;
             child.turn = child.turn.other();
             moves.push(child);
         }
         // South
-        if pawn < 72 {
+        if pawn < 72
+            && (pawn % 9 == 0 || ((1 << sw_wall) & self.hwalls) == 0)
+            && ((pawn + 1) % 9 == 0 || ((1 << se_wall) & self.hwalls) == 0)
+        {
             let mut child = self.clone();
             child.pawns[turn] = pawn + 9;
             child.turn = child.turn.other();
             moves.push(child);
         }
         // East
-        if (pawn + 1) % 9 != 0 {
+        if (pawn + 1) % 9 != 0
+            && (pawn < 9 || ((1 << ne_wall) & self.vwalls) == 0)
+            && (pawn > 71 || ((1 << se_wall) & self.vwalls) == 0)
+        {
             let mut child = self.clone();
             child.pawns[turn] = pawn + 1;
             child.turn = child.turn.other();
             moves.push(child);
         }
         // West
-        if (pawn + 1) % 9 != 0 {
+        if (pawn + 1) % 9 != 0
+            && (pawn < 9 || ((1 << nw_wall) & self.vwalls) == 0)
+            && (pawn > 71 || ((1 << sw_wall) & self.vwalls) == 0)
+        {
             let mut child = self.clone();
             child.pawns[turn] = pawn - 1;
             child.turn = child.turn.other();
