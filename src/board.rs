@@ -1,6 +1,16 @@
-enum Player {
-    White,
-    Black,
+#[derive(Clone, Copy, Debug)]
+pub enum Player {
+    White = 0,
+    Black = 1,
+}
+
+impl Player {
+    pub fn other(&self) -> Player {
+        match self {
+            Player::White => Player::Black,
+            Player::Black => Player::White,
+        }
+    }
 }
 
 enum Direction {
@@ -13,9 +23,9 @@ enum Direction {
 /// squares are numbered, rows then columns, starting at a1
 pub fn sqnum_for_coord(col: char, row: u8) -> u8 {
     (row - 1) * 9 + (col as u8) - 97
-    
 }
 
+#[derive(Clone, Debug)]
 pub struct Board {
     /// pawn position, in square numbers
     pawns: [u8; 2],
@@ -33,16 +43,84 @@ pub struct Board {
 
 impl Board {
     pub fn new() -> Board {
-	Board{
-	    pawns: [sqnum_for_coord('e', 9), sqnum_for_coord('e', 1)],
-	    remaining_walls: [10, 10],
-	    hwalls: 0,
-	    vwalls: 0,
-	    turn: Player::White,
-	}
+        Board {
+            pawns: [sqnum_for_coord('e', 9), sqnum_for_coord('e', 1)],
+            remaining_walls: [10, 10],
+            hwalls: 0,
+            vwalls: 0,
+            turn: Player::White,
+        }
     }
 
-    pub fn moves() -> Vec<Board> {
-	
+    pub fn moves(&self) -> Vec<Board> {
+        let turn = self.turn as usize;
+        let pawn = self.pawns[turn];
+
+        let mut moves = vec![];
+
+        // Pawn movements
+        // TODO wall blocking
+        // TODO hopping over pawns
+        // North
+        if pawn > 8 {
+            let mut child = self.clone();
+            child.pawns[turn] = pawn - 9;
+            child.turn = child.turn.other();
+            moves.push(child);
+        }
+        // South
+        if pawn < 72 {
+            let mut child = self.clone();
+            child.pawns[turn] = pawn + 9;
+            child.turn = child.turn.other();
+            moves.push(child);
+        }
+        // East
+        if (pawn + 1) % 9 != 0 {
+            let mut child = self.clone();
+            child.pawns[turn] = pawn + 1;
+            child.turn = child.turn.other();
+            moves.push(child);
+        }
+        // West
+        if (pawn + 1) % 9 != 0 {
+            let mut child = self.clone();
+            child.pawns[turn] = pawn - 1;
+            child.turn = child.turn.other();
+            moves.push(child);
+        }
+
+        // Wall placements
+        // We're going to start with a fairly naive algorithm, and optimize later
+        // TODO checking for blocked paths
+        if self.remaining_walls[turn] == 0 {
+            return moves;
+        }
+        for i in 0..64 {
+            let wall_bit = 1 << i;
+            if (self.hwalls & wall_bit) > 0 || (self.vwalls & wall_bit) > 0 {
+                continue;
+            }
+            if i == 0 || ((wall_bit >> 1) & self.hwalls) == 0 {
+                if i == 63 || ((wall_bit << 1) & self.hwalls == 0) {
+                    let mut child = self.clone();
+                    child.hwalls |= wall_bit;
+                    child.remaining_walls[turn] -= 1;
+                    child.turn = child.turn.other();
+                    moves.push(child);
+                }
+            }
+            if i == 0 || ((wall_bit >> 1) & self.vwalls) == 0 {
+                if i == 63 || ((wall_bit << 1) & self.vwalls == 0) {
+                    let mut child = self.clone();
+                    child.vwalls |= wall_bit;
+                    child.remaining_walls[turn] -= 1;
+                    child.turn = child.turn.other();
+                    moves.push(child);
+                }
+            }
+        }
+
+        moves
     }
 }

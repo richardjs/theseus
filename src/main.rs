@@ -1,5 +1,6 @@
 extern crate theseus;
 
 fn main() {
-    theseus::Board::new();
+    let board = theseus::Board::new();
+    println!("{:?}", board.moves().len());
 }
