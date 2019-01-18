@@ -51,13 +51,14 @@ impl Board {
 
         let mut moves = vec![];
 
-        // Pawn movements
+        // pawn movements
+        // TODO confirm these calculations are correct when things are deriving from the else case
         let se_wall = (pawn / 9) * 8 + (pawn % 9);
         let sw_wall = if se_wall > 0 { se_wall - 1 } else { 0 };
         let nw_wall = if se_wall > 9 { se_wall - 9 } else { 0 };
         let ne_wall = nw_wall + 1;
         // TODO hopping over pawns
-        // North
+        // north
         if pawn > 8
             && (pawn % 9 == 0 || ((1 << nw_wall) & self.hwalls) == 0)
             && ((pawn + 1) % 9 == 0 || ((1 << ne_wall) & self.hwalls) == 0)
@@ -67,7 +68,7 @@ impl Board {
             child.turn = child.turn.other();
             moves.push(child);
         }
-        // South
+        // south
         if pawn < 72
             && (pawn % 9 == 0 || ((1 << sw_wall) & self.hwalls) == 0)
             && ((pawn + 1) % 9 == 0 || ((1 << se_wall) & self.hwalls) == 0)
@@ -77,7 +78,7 @@ impl Board {
             child.turn = child.turn.other();
             moves.push(child);
         }
-        // East
+        // east
         if (pawn + 1) % 9 != 0
             && (pawn < 9 || ((1 << ne_wall) & self.vwalls) == 0)
             && (pawn > 71 || ((1 << se_wall) & self.vwalls) == 0)
@@ -87,7 +88,7 @@ impl Board {
             child.turn = child.turn.other();
             moves.push(child);
         }
-        // West
+        // west
         if (pawn) % 9 != 0
             && (pawn < 9 || ((1 << nw_wall) & self.vwalls) == 0)
             && (pawn > 71 || ((1 << sw_wall) & self.vwalls) == 0)
@@ -98,8 +99,8 @@ impl Board {
             moves.push(child);
         }
 
-        // Wall placements
-        // We're going to start with a fairly naive algorithm, and optimize later
+        // wall placements
+        // we're going to start with a fairly naive algorithm, and optimize later
         // TODO checking for blocked paths
         if self.remaining_walls[turn] == 0 {
             return moves;
@@ -130,6 +131,42 @@ impl Board {
         }
 
         moves
+    }
+
+    pub fn print(&mut self) {
+        for row in 0..9 {
+            for col in 0..9 {
+                let sqnum = row * 9 + col;
+                let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
+                let ne_wall = if se_wall > 7 { se_wall - 8 } else { 0 };
+                print!(
+                    "{}",
+                    if self.pawns[Player::White as usize] == sqnum {
+                        "W"
+                    } else if self.pawns[Player::Black as usize] == sqnum {
+                        "B"
+                    } else {
+                        "."
+                    }
+                );
+                if col != 8 {
+                    print!(
+                        " {} ",
+                        if (sqnum > 8 && (self.vwalls & (1 << ne_wall)) > 0)
+                            || (sqnum < 72 && (self.vwalls & (1 << se_wall)) > 0)
+                        {
+                            "|"
+                        } else {
+                            " "
+                        }
+                    );
+                }
+            }
+            println!();
+            if row != 8 {
+                println!();
+            }
+        }
     }
 }
 
@@ -182,16 +219,16 @@ mod tests {
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 3);
     }
 
-	#[test]
-	fn corner_moves() {
-		let mut board = Board::new();
-		board.pawns[Player::White as usize] = 0;
+    #[test]
+    fn corner_moves() {
+        let mut board = Board::new();
+        board.pawns[Player::White as usize] = 0;
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
-		board.pawns[Player::White as usize] = 8;
+        board.pawns[Player::White as usize] = 8;
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
-		board.pawns[Player::White as usize] = 72;
+        board.pawns[Player::White as usize] = 72;
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
-		board.pawns[Player::White as usize] = 80;
+        board.pawns[Player::White as usize] = 80;
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
-	}
+    }
 }
