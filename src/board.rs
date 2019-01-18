@@ -56,7 +56,6 @@ impl Board {
         let sw_wall = if se_wall > 0 { se_wall - 1 } else { 0 };
         let nw_wall = if se_wall > 9 { se_wall - 9 } else { 0 };
         let ne_wall = nw_wall + 1;
-        // TODO wall blocking
         // TODO hopping over pawns
         // North
         if pawn > 8
@@ -89,7 +88,7 @@ impl Board {
             moves.push(child);
         }
         // West
-        if (pawn + 1) % 9 != 0
+        if (pawn) % 9 != 0
             && (pawn < 9 || ((1 << nw_wall) & self.vwalls) == 0)
             && (pawn > 71 || ((1 << sw_wall) & self.vwalls) == 0)
         {
@@ -155,7 +154,6 @@ mod tests {
     }
 
     #[test]
-    /// tests every wall position that borders an arbitrary non-edge space
     fn simple_wall_blocking() {
         let mut board = Board::new();
         board.pawns[Player::White as usize] = 12;
@@ -183,4 +181,17 @@ mod tests {
         board.vwalls |= 1 << 11;
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 3);
     }
+
+	#[test]
+	fn corner_moves() {
+		let mut board = Board::new();
+		board.pawns[Player::White as usize] = 0;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
+		board.pawns[Player::White as usize] = 8;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
+		board.pawns[Player::White as usize] = 72;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
+		board.pawns[Player::White as usize] = 80;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
+	}
 }
