@@ -54,7 +54,7 @@ impl Board {
         // Pawn movements
         let se_wall = (pawn / 9) * 8 + (pawn % 9);
         let sw_wall = if se_wall > 0 { se_wall - 1 } else { 0 };
-        let nw_wall = if se_wall > 9 { se_wall - 10 } else { 0 };
+        let nw_wall = if se_wall > 9 { se_wall - 9 } else { 0 };
         let ne_wall = nw_wall + 1;
         // TODO wall blocking
         // TODO hopping over pawns
@@ -131,5 +131,56 @@ impl Board {
         }
 
         moves
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn only_pawn_moves(original: &Board, moves: Vec<Board>) -> Vec<Board> {
+        let mut pawn_moves = vec![];
+        for child in moves {
+            if original.pawns[original.turn as usize] != child.pawns[original.turn as usize] {
+                pawn_moves.push(child);
+            }
+        }
+        pawn_moves
+    }
+
+    #[test]
+    fn opening_branching_factor() {
+        let board = Board::new();
+        assert_eq!(board.moves().len(), 131);
+    }
+
+    #[test]
+    /// tests every wall position that borders an arbitrary non-edge space
+    fn simple_wall_blocking() {
+        let mut board = Board::new();
+        board.pawns[Player::White as usize] = 12;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 4);
+        board.hwalls |= 1 << 2;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 3);
+        board.hwalls = 0;
+        board.hwalls |= 1 << 3;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 3);
+        board.hwalls |= 1 << 10;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
+        board.hwalls = 0;
+        board.hwalls |= 1 << 11;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 3);
+        board.vwalls |= 1 << 2;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
+        board.vwalls = 0;
+        board.vwalls |= 1 << 10;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
+        board.vwalls = 0;
+        board.vwalls |= 1 << 3;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
+        board.hwalls = 0;
+        board.vwalls = 0;
+        board.vwalls |= 1 << 11;
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 3);
     }
 }
