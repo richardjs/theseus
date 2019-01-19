@@ -155,7 +155,7 @@ impl Board {
                         if (sqnum > 8 && (self.vwalls & (1 << ne_wall)) > 0)
                             || (sqnum < 72 && (self.vwalls & (1 << se_wall)) > 0)
                         {
-                            "|"
+                            "#"
                         } else {
                             " "
                         }
@@ -163,9 +163,21 @@ impl Board {
                 }
             }
             println!();
-            if row != 8 {
-                println!();
+            if row < 8 {
+                for col in 0..9 {
+                    let sqnum = row * 9 + col;
+                    let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
+                    let sw_wall = if se_wall > 1 { se_wall - 1 } else { 0 };
+                    if ((sqnum + 1) % 9 != 0 && (self.hwalls & (1 << se_wall)) > 0)
+                        || (sqnum % 9 != 0) && (self.hwalls & (1 << sw_wall) > 0)
+                    {
+                        print!("#   ");
+                    } else {
+                        print!("    ");
+                    }
+                }
             }
+            println!();
         }
     }
 }
