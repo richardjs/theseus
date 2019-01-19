@@ -133,7 +133,7 @@ impl Board {
         moves
     }
 
-    pub fn print(&mut self) {
+    pub fn print(self) {
         for row in 0..9 {
             for col in 0..9 {
                 let sqnum = row * 9 + col;
