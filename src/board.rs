@@ -139,7 +139,7 @@ impl Board {
                 let sqnum = row * 9 + col;
                 let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
                 let ne_wall = if se_wall > 7 { se_wall - 8 } else { 0 };
-                print!(
+                eprint!(
                     "{}",
                     if self.pawns[Player::White as usize] == sqnum {
                         "W"
@@ -150,19 +150,16 @@ impl Board {
                     }
                 );
                 if col != 8 {
-                    print!(
-                        " {} ",
-                        if (sqnum > 8 && (self.vwalls & (1 << ne_wall)) > 0)
-                            || (sqnum < 72 && (self.vwalls & (1 << se_wall)) > 0)
-                        {
-                            "#"
-                        } else {
-                            " "
-                        }
-                    );
+                    if (sqnum > 8 && (self.vwalls & (1 << ne_wall)) > 0)
+                        || (sqnum < 72 && (self.vwalls & (1 << se_wall)) > 0)
+                    {
+                        eprint!(" # ");
+                    } else {
+                        eprint!("   ");
+                    }
                 }
             }
-            println!();
+            eprintln!();
             if row < 8 {
                 for col in 0..9 {
                     let sqnum = row * 9 + col;
@@ -171,13 +168,13 @@ impl Board {
                     if ((sqnum + 1) % 9 != 0 && (self.hwalls & (1 << se_wall)) > 0)
                         || (sqnum % 9 != 0) && (self.hwalls & (1 << sw_wall) > 0)
                     {
-                        print!("#   ");
+                        eprint!("#   ");
                     } else {
-                        print!("    ");
+                        eprint!("    ");
                     }
                 }
             }
-            println!();
+            eprintln!();
         }
     }
 }
