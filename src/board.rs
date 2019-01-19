@@ -139,16 +139,13 @@ impl Board {
                 let sqnum = row * 9 + col;
                 let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
                 let ne_wall = if se_wall > 7 { se_wall - 8 } else { 0 };
-                eprint!(
-                    "{}",
-                    if self.pawns[Player::White as usize] == sqnum {
-                        "W"
-                    } else if self.pawns[Player::Black as usize] == sqnum {
-                        "B"
-                    } else {
-                        "."
-                    }
-                );
+                if self.pawns[Player::White as usize] == sqnum {
+                    eprint!("W");
+                } else if self.pawns[Player::Black as usize] == sqnum {
+                    eprint!("B");
+                } else {
+                    eprint!(".");
+                }
                 if col != 8 {
                     if (sqnum > 8 && (self.vwalls & (1 << ne_wall)) > 0)
                         || (sqnum < 72 && (self.vwalls & (1 << se_wall)) > 0)
