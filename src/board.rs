@@ -51,6 +51,10 @@ impl Board {
         }
     }
 
+    pub fn turn(&self) -> Player {
+        self.turn
+    }
+
     pub fn moves(&self) -> Vec<Board> {
         let turn = self.turn as usize;
         let pawn = self.pawns[turn];
@@ -139,8 +143,10 @@ impl Board {
         moves
     }
 
-    pub fn print(self) {
+    pub fn print(&self) {
+        eprintln!("  a   b   c   d   e   f   g   h   i");
         for row in 0..9 {
+            eprint!("{} ", row + 1);
             for col in 0..9 {
                 let sqnum = row * 9 + col;
                 let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
@@ -176,8 +182,8 @@ impl Board {
                         eprint!("    ");
                     }
                 }
+                eprintln!();
             }
-            eprintln!();
         }
     }
 }
