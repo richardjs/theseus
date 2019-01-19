@@ -5,11 +5,17 @@ pub enum Player {
 }
 
 impl Player {
-    pub fn other(&self) -> Player {
+    pub fn other(self) -> Player {
         match self {
             Player::White => Player::Black,
             Player::Black => Player::White,
         }
+    }
+}
+
+impl Default for Player {
+    fn default() -> Self {
+        Player::White
     }
 }
 
@@ -18,7 +24,7 @@ pub fn sqnum_for_coord(col: char, row: u8) -> u8 {
     (row - 1) * 9 + (col as u8) - 97
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Board {
     /// pawn position, in square numbers
     pawns: [u8; 2],
@@ -110,23 +116,23 @@ impl Board {
             if (self.hwalls & wall_bit) > 0 || (self.vwalls & wall_bit) > 0 {
                 continue;
             }
-            if i == 0 || ((wall_bit >> 1) & self.hwalls) == 0 {
-                if i == 63 || ((wall_bit << 1) & self.hwalls == 0) {
-                    let mut child = self.clone();
-                    child.hwalls |= wall_bit;
-                    child.remaining_walls[turn] -= 1;
-                    child.turn = child.turn.other();
-                    moves.push(child);
-                }
+            if (i == 0 || ((wall_bit >> 1) & self.hwalls) == 0)
+                && (i == 63 || ((wall_bit << 1) & self.hwalls == 0))
+            {
+                let mut child = self.clone();
+                child.hwalls |= wall_bit;
+                child.remaining_walls[turn] -= 1;
+                child.turn = child.turn.other();
+                moves.push(child);
             }
-            if i == 0 || ((wall_bit >> 1) & self.vwalls) == 0 {
-                if i == 63 || ((wall_bit << 1) & self.vwalls == 0) {
-                    let mut child = self.clone();
-                    child.vwalls |= wall_bit;
-                    child.remaining_walls[turn] -= 1;
-                    child.turn = child.turn.other();
-                    moves.push(child);
-                }
+            if (i == 0 || ((wall_bit >> 1) & self.vwalls) == 0)
+                && (i == 63 || ((wall_bit << 1) & self.vwalls == 0))
+            {
+                let mut child = self.clone();
+                child.vwalls |= wall_bit;
+                child.remaining_walls[turn] -= 1;
+                child.turn = child.turn.other();
+                moves.push(child);
             }
         }
 
