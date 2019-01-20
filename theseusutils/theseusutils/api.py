@@ -15,6 +15,7 @@ app = flask.Flask(__name__)
 
 @app.route('/theseus')
 def think():
+    print(request.args.get)
     gameid = request.args.get('id')
     num_players = request.args.get('players')
     pawn1 = request.args.get('pawn1')
@@ -24,7 +25,10 @@ def think():
     wall_centers = request.args.get('wallcenters')
     turn = request.args.get('turn')
 
-    tqbn = pawn1 + pawn2 + \
+    print(turn)
+    print('^^^')
+
+    tqbn = pawn1.zfill(2) + pawn2.zfill(2) + \
         walls1.zfill(2) + walls.zfill(2) + wall_centers + turn
 
     engine = Popen((
