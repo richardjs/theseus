@@ -19,9 +19,15 @@ impl Default for Player {
     }
 }
 
-/// squares are numbered, rows then columns, starting at a1
+/// squares are numbered, left-to-right, top-to-bottom, starting at a9
 pub fn sqnum_for_coord(col: char, row: u8) -> u8 {
-    (row - 1) * 9 + (col as u8) - 97
+    (8 - (row - 1)) * 9 + (col as u8) - 97
+}
+
+pub fn sqnum_for_string(string: &String) -> u8 {
+    assert_eq!(string.len(), 2);
+    let chars: Vec<_> = string.to_lowercase().chars().collect();
+    sqnum_for_coord(chars[0], chars[1] as u8)
 }
 
 #[derive(Clone, Debug, Default)]
@@ -43,7 +49,7 @@ pub struct Board {
 impl Board {
     pub fn new() -> Board {
         Board {
-            pawns: [sqnum_for_coord('e', 9), sqnum_for_coord('e', 1)],
+            pawns: [sqnum_for_coord('e', 1), sqnum_for_coord('e', 9)],
             remaining_walls: [10, 10],
             hwalls: 0,
             vwalls: 0,
@@ -144,9 +150,8 @@ impl Board {
     }
 
     pub fn print(&self) {
-        eprintln!("  a   b   c   d   e   f   g   h   i");
         for row in 0..9 {
-            eprint!("{} ", row + 1);
+            eprint!("{} ", 8 - row + 1);
             for col in 0..9 {
                 let sqnum = row * 9 + col;
                 let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
@@ -185,6 +190,7 @@ impl Board {
                 eprintln!();
             }
         }
+        eprintln!("  a   b   c   d   e   f   g   h   i");
     }
 }
 
