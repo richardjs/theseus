@@ -1,4 +1,4 @@
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Player {
     White = 0,
     Black = 1,
@@ -21,10 +21,12 @@ impl Default for Player {
 
 /// squares are numbered, left-to-right, top-to-bottom, starting at a9
 pub fn sqnum_for_coord(col: char, row: u8) -> u8 {
-    (8 - (row - 1)) * 9 + (col as u8) - 97
+    dbg!(col);
+    dbg!(row);
+    (8 - (row - 1)) * 9 + (col.to_ascii_lowercase() as u8) - 97
 }
 
-pub fn sqnum_for_string(string: &String) -> u8 {
+pub fn sqnum_for_string(string: &str) -> u8 {
     assert_eq!(string.len(), 2);
     let chars: Vec<_> = string.to_lowercase().chars().collect();
     sqnum_for_coord(chars[0], chars[1] as u8)
@@ -54,6 +56,43 @@ impl Board {
             hwalls: 0,
             vwalls: 0,
             turn: Player::White,
+        }
+    }
+
+    pub fn from_tqbn(tqbn: &str) -> Board {
+        assert!(tqbn.len() == 73);
+        let tqbn: Vec<_> = tqbn.chars().collect();
+
+        let mut hwalls = 0;
+        let mut vwalls = 0;
+        for (i, c) in tqbn[8..72].into_iter().enumerate() {
+            match c.to_ascii_lowercase() {
+                'h' => hwalls |= 1 << i,
+                'v' => vwalls |= 1 << i,
+                'n' => {}
+                _ => {
+                    panic!();
+                }
+            }
+        }
+
+        dbg!(tqbn[1]);
+        Board {
+            pawns: [
+                sqnum_for_coord(tqbn[0], tqbn[1].to_digit(10).unwrap() as u8),
+                sqnum_for_coord(tqbn[2], tqbn[3].to_digit(10).unwrap() as u8),
+            ],
+            remaining_walls: [
+                tqbn[4..6].iter().collect::<String>().parse::<u8>().unwrap(),
+                tqbn[6..8].iter().collect::<String>().parse::<u8>().unwrap(),
+            ],
+            hwalls,
+            vwalls,
+            turn: match tqbn[72] {
+                '1' => Player::White,
+                '2' => Player::Black,
+                _ => panic!(),
+            },
         }
     }
 
@@ -254,5 +293,19 @@ mod tests {
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
         board.pawns[Player::White as usize] = 80;
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
+    }
+
+    #[test]
+    fn load_tqbn() {
+        let board = Board::from_tqbn(&String::from(
+            "e1e91010nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn1",
+        ));
+        assert_eq!(board.pawns[0], 76);
+        assert_eq!(board.pawns[1], 4);
+        assert_eq!(board.remaining_walls[0], 10);
+        assert_eq!(board.remaining_walls[1], 10);
+        assert_eq!(board.hwalls, 0);
+        assert_eq!(board.vwalls, 0);
+        assert_eq!(board.turn, Player::White);
     }
 }
