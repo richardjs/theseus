@@ -21,8 +21,6 @@ impl Default for Player {
 
 /// squares are numbered, left-to-right, top-to-bottom, starting at a9
 pub fn sqnum_for_coord(col: char, row: u8) -> u8 {
-    dbg!(col);
-    dbg!(row);
     (8 - (row - 1)) * 9 + (col.to_ascii_lowercase() as u8) - 97
 }
 
@@ -76,7 +74,6 @@ impl Board {
             }
         }
 
-        dbg!(tqbn[1]);
         Board {
             pawns: [
                 sqnum_for_coord(tqbn[0], tqbn[1].to_digit(10).unwrap() as u8),
