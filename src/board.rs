@@ -21,7 +21,7 @@ impl Default for Player {
 
 /// squares are numbered, left-to-right, top-to-bottom, starting at a9
 pub fn sqnum_for_coord(col: char, row: u8) -> u8 {
-    (8 - (row - 1)) * 9 + (col.to_ascii_lowercase() as u8) - 97
+    (row - 1) * 9 + (col.to_ascii_lowercase() as u8) - 97
 }
 
 pub fn sqnum_for_string(string: &str) -> u8 {
@@ -49,7 +49,7 @@ pub struct Board {
 impl Board {
     pub fn new() -> Board {
         Board {
-            pawns: [sqnum_for_coord('e', 1), sqnum_for_coord('e', 9)],
+            pawns: [sqnum_for_coord('e', 9), sqnum_for_coord('e', 1)],
             remaining_walls: [10, 10],
             hwalls: 0,
             vwalls: 0,
@@ -186,8 +186,9 @@ impl Board {
     }
 
     pub fn print(&self) {
+        eprintln!("  a   b   c   d   e   f   g   h   i");
         for row in 0..9 {
-            eprint!("{} ", 8 - row + 1);
+            eprint!("{} ", row + 1);
             for col in 0..9 {
                 let sqnum = row * 9 + col;
                 let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
@@ -226,7 +227,6 @@ impl Board {
                 eprintln!();
             }
         }
-        eprintln!("  a   b   c   d   e   f   g   h   i");
     }
 }
 
@@ -295,7 +295,7 @@ mod tests {
     #[test]
     fn load_tqbn() {
         let board = Board::from_tqbn(&String::from(
-            "e1e91010nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn1",
+            "e9e11010nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn1",
         ));
         assert_eq!(board.pawns[0], 76);
         assert_eq!(board.pawns[1], 4);
