@@ -113,7 +113,6 @@ impl Board {
         let mut moves = vec![];
 
         // pawn movements
-        // TODO confirm these calculations are correct when things are deriving from the else case
         let se_wall = (pawn / 9) * 8 + (pawn % 9);
         let sw_wall = if se_wall > 0 { se_wall - 1 } else { 0 };
         let nw_wall = if se_wall > 9 { se_wall - 9 } else { 0 };
