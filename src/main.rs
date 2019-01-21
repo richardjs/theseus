@@ -8,13 +8,14 @@ fn main() {
         eprintln!("usage: theseus [tqbn]");
         std::process::exit(1);
     }
-    let tqbn = &args[1].to_string();
+    let tqbn = &args[1].to_string().to_ascii_lowercase();
+    eprintln!("input: {}", tqbn);
     let board = theseus::Board::from_tqbn(tqbn);
     board.print();
     let moves = board.moves();
     let child = &moves[rand::thread_rng().gen_range(0, moves.len())];
     child.print();
     let move_string = board.move_string_to(child);
-    eprintln!("{}", move_string);
+    eprintln!("output: {}", move_string);
     println!("{}", move_string);
 }
