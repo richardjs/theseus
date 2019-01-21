@@ -222,15 +222,16 @@ impl Board {
             eprintln!();
             if row < 8 {
                 for col in 0..9 {
+                    eprint!("  ");
                     let sqnum = row * 9 + col;
                     let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
                     let sw_wall = if se_wall > 1 { se_wall - 1 } else { 0 };
                     if ((sqnum + 1) % 9 != 0 && (self.hwalls & (1 << se_wall)) > 0)
                         || (sqnum % 9 != 0) && (self.hwalls & (1 << sw_wall) > 0)
                     {
-                        eprint!("#   ");
+                        eprint!("# ");
                     } else {
-                        eprint!("    ");
+                        eprint!("  ");
                     }
                 }
                 eprintln!();
@@ -341,5 +342,17 @@ mod tests {
         assert_eq!(board.hwalls, 0);
         assert_eq!(board.vwalls, 0);
         assert_eq!(board.turn, Player::White);
+    }
+
+    #[test]
+    fn wall_collision_bug() {
+        let board = Board::from_tqbn(
+            "e9e10506nnnnnnnnnnvnnnnnnnhnnnnnnnnnnhnnnnvnvnnvnnnnhnnnhnnnnnnnnnnnhnnn2",
+        );
+        for child in board.moves() {
+            board.print();
+            child.print();
+            assert_ne!(board.move_string_to(&child), "c1v");
+        }
     }
 }
