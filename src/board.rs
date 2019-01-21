@@ -180,8 +180,8 @@ impl Board {
                 child.turn = child.turn.other();
                 moves.push(child);
             }
-            if (i == 0 || ((wall_bit >> 1) & self.vwalls) == 0)
-                && (i == 63 || ((wall_bit << 1) & self.vwalls == 0))
+            if (i < 8 || ((wall_bit >> 8) & self.vwalls) == 0)
+                && (i > 55 || ((wall_bit << 8) & self.vwalls == 0))
             {
                 let mut child = self.clone();
                 child.vwalls |= wall_bit;
@@ -345,7 +345,7 @@ mod tests {
     }
 
     #[test]
-    fn wall_collision_bug() {
+    fn vertical_wall_place_bug() {
         let board = Board::from_tqbn(
             "e9e10506nnnnnnnnnnvnnnnnnnhnnnnnnnnnnhnnnnvnvnnvnnnnhnnnhnnnnnnnnnnnhnnn2",
         );
@@ -353,6 +353,14 @@ mod tests {
             board.print();
             child.print();
             assert_ne!(board.move_string_to(&child), "c1v");
+        }
+        let board = Board::from_tqbn(
+            "e9e10606nnnhvnnnnnnnnnnnnnnnnnnnnnvnvnnnnnnnnnvnnnvnnnnnnnnnvnnnnnnvnnnn1",
+        );
+        for child in board.moves() {
+            board.print();
+            child.print();
+            assert_ne!(board.move_string_to(&child), "e3v");
         }
     }
 }
