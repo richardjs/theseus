@@ -1,5 +1,7 @@
 extern crate theseus;
 
+use rand::prelude::*;
+
 fn main() {
     let args: Vec<_> = std::env::args().collect();
     if args.len() != 2 {
@@ -9,7 +11,10 @@ fn main() {
     let tqbn = &args[1].to_string();
     let board = theseus::Board::from_tqbn(tqbn);
     board.print();
-    let child = &board.moves()[0];
+    let moves = board.moves();
+    let child = &moves[rand::thread_rng().gen_range(0, moves.len())];
     child.print();
-    println!("{}", board.move_string_to(child));
+    let move_string = board.move_string_to(child);
+    eprintln!("{}", move_string);
+    println!("{}", move_string);
 }
