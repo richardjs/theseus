@@ -30,6 +30,15 @@ pub fn sqnum_for_string(string: &str) -> u8 {
     sqnum_for_coord(chars[0], chars[1] as u8)
 }
 
+pub fn string_for_sqnum(sqnum: u8) -> String {
+    let row = sqnum / 9;
+    let col = sqnum % 9;
+    let mut string = String::new();
+    string.push((col + 97) as char);
+    string.push((row + 49) as char);
+    string
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Board {
     /// pawn position, in square numbers
@@ -227,6 +236,34 @@ impl Board {
                 eprintln!();
             }
         }
+    }
+
+    pub fn move_string_to(&self, child: &Board) -> String {
+        let turn = self.turn as usize;
+        assert!(
+            self.turn != child.turn
+                && (self.pawns[turn] != child.pawns[turn]
+                    || self.remaining_walls[turn] != child.remaining_walls[turn])
+        );
+        if self.pawns[turn] != child.pawns[turn] {
+            return string_for_sqnum(child.pawns[turn]);
+        }
+        let wall;
+        let horizontal;
+        if (child.hwalls & !self.hwalls) > 0 {
+            wall = child.hwalls & !self.hwalls;
+            horizontal = true;
+        } else if (child.vwalls & !self.vwalls) > 0 {
+            wall = child.vwalls & !self.vwalls;
+            horizontal = false;
+        } else {
+            panic!("no change in walls");
+        }
+        let wallnum = if wall > 0 { wall.trailing_zeros() } else { 0 } as u8;
+		let sqnum = wallnum + wallnum/8;
+		let mut move_string = string_for_sqnum(sqnum);
+		move_string.push(if horizontal {'h'} else {'v'});
+		move_string
     }
 }
 

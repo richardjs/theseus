@@ -8,7 +8,8 @@ fn main() {
     }
     let tqbn = &args[1].to_string();
     let board = theseus::Board::from_tqbn(tqbn);
-	//println!("e2");
-	board.print();
-    dbg!(board);
+    board.print();
+    let child = &board.moves()[0];
+    child.print();
+    println!("{}", board.move_string_to(child));
 }
