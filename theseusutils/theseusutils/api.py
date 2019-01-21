@@ -34,7 +34,7 @@ def think():
 
     move = engine.stdout.readline().strip().decode('utf-8')
     rawlog = engine.stderr.read().strip().decode('utf-8')
-    log = rawlog.replace('\n', '\\n')
+    log = '> ' + rawlog.replace('\n', '\\n> ')
 
     r = flask.Response('{"move": "%s", "log": "%s"}' % (move, log))
     r.headers['Content-Type'] = 'application/json'
