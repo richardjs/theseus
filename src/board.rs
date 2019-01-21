@@ -260,10 +260,10 @@ impl Board {
             panic!("no change in walls");
         }
         let wallnum = if wall > 0 { wall.trailing_zeros() } else { 0 } as u8;
-		let sqnum = wallnum + wallnum/8;
-		let mut move_string = string_for_sqnum(sqnum);
-		move_string.push(if horizontal {'h'} else {'v'});
-		move_string
+        let sqnum = wallnum + wallnum / 8;
+        let mut move_string = string_for_sqnum(sqnum);
+        move_string.push(if horizontal { 'h' } else { 'v' });
+        move_string
     }
 }
 
