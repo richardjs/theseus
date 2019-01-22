@@ -45,6 +45,15 @@ impl Direction {
             West => North,
         }
     }
+
+	fn move_sqnum(&self, sqnum: u8) -> u8{
+		match self {
+			North => sqnum - 9,
+			South => sqnum + 9,
+			East => sqnum + 1,
+			West => sqnum - 1,
+		}
+	}
 }
 
 /// squares are numbered, left-to-right, top-to-bottom, starting at a9
@@ -134,7 +143,7 @@ impl Board {
         self.turn
     }
 
-    fn is_open(&self, sqnum: u8, direction: Direction) -> bool {
+    fn is_open(&self, sqnum: u8, direction: &Direction) -> bool {
         let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
         let sw_wall = if se_wall > 0 { se_wall - 1 } else { 0 };
         let nw_wall = if se_wall > 9 { se_wall - 9 } else { 0 };
@@ -172,62 +181,24 @@ impl Board {
 
         // pawn movements
         // TODO hopping over pawns when wall blocks
-        if self.is_open(pawn, North) {
+		for direction in [North, South, East, West].iter() {
+			if !self.is_open(pawn, direction) {
+				continue;
+			}
+
             let mut child = self.clone();
-            child.pawns[turn] = pawn - 9;
+            child.pawns[turn] = direction.move_sqnum(pawn);
             child.turn = child.turn.other();
 
             if child.pawns[turn] == child.pawns[other] {
-                if self.is_open(child.pawns[turn], North) {
-                    child.pawns[turn] -= 9;
+                if self.is_open(child.pawns[turn], direction) {
+                    child.pawns[turn] = direction.move_sqnum(child.pawns[turn]);
                     moves.push(child);
                 }
             } else {
                 moves.push(child);
             }
-        }
-        if self.is_open(pawn, South) {
-            let mut child = self.clone();
-            child.pawns[turn] = pawn + 9;
-            child.turn = child.turn.other();
-
-            if child.pawns[turn] == child.pawns[other] {
-                if self.is_open(child.pawns[turn], South) {
-                    child.pawns[turn] += 9;
-                    moves.push(child);
-                }
-            } else {
-                moves.push(child);
-            }
-        }
-        if self.is_open(pawn, East) {
-            let mut child = self.clone();
-            child.pawns[turn] = pawn + 1;
-            child.turn = child.turn.other();
-
-            if child.pawns[turn] == child.pawns[other] {
-                if self.is_open(child.pawns[turn], East) {
-                    child.pawns[turn] += 1;
-                    moves.push(child);
-                }
-            } else {
-                moves.push(child);
-            }
-        }
-        if self.is_open(pawn, West) {
-            let mut child = self.clone();
-            child.pawns[turn] = pawn - 1;
-            child.turn = child.turn.other();
-
-            if child.pawns[turn] == child.pawns[other] {
-                if self.is_open(child.pawns[turn], West) {
-                    child.pawns[turn] -= 1;
-                    moves.push(child);
-                }
-            } else {
-                moves.push(child);
-            }
-        }
+		}
 
         // wall placements
         // we're going to start with a fairly naive algorithm, and optimize later
