@@ -46,14 +46,14 @@ impl Direction {
         }
     }
 
-	fn move_sqnum(&self, sqnum: u8) -> u8{
-		match self {
-			North => sqnum - 9,
-			South => sqnum + 9,
-			East => sqnum + 1,
-			West => sqnum - 1,
-		}
-	}
+    fn move_sqnum(&self, sqnum: u8) -> u8 {
+        match self {
+            North => sqnum - 9,
+            South => sqnum + 9,
+            East => sqnum + 1,
+            West => sqnum - 1,
+        }
+    }
 }
 
 /// squares are numbered, left-to-right, top-to-bottom, starting at a9
@@ -180,11 +180,10 @@ impl Board {
         let mut moves = vec![];
 
         // pawn movements
-        // TODO hopping over pawns when wall blocks
-		for direction in [North, South, East, West].iter() {
-			if !self.is_open(pawn, direction) {
-				continue;
-			}
+        for direction in [North, South, East, West].iter() {
+            if !self.is_open(pawn, direction) {
+                continue;
+            }
 
             let mut child = self.clone();
             child.pawns[turn] = direction.move_sqnum(pawn);
@@ -194,11 +193,22 @@ impl Board {
                 if self.is_open(child.pawns[turn], direction) {
                     child.pawns[turn] = direction.move_sqnum(child.pawns[turn]);
                     moves.push(child);
+                } else {
+                    if self.is_open(child.pawns[turn], &direction.left()) {
+                        // clone the child in case we also can jump to the right
+                        let mut child = child.clone();
+                        child.pawns[turn] = direction.left().move_sqnum(child.pawns[turn]);
+                        moves.push(child);
+                    }
+                    if self.is_open(child.pawns[turn], &direction.right()) {
+                        child.pawns[turn] = direction.right().move_sqnum(child.pawns[turn]);
+                        moves.push(child);
+                    }
                 }
             } else {
                 moves.push(child);
             }
-		}
+        }
 
         // wall placements
         // we're going to start with a fairly naive algorithm, and optimize later
@@ -458,6 +468,26 @@ mod tests {
             }
         }
         assert!(jumped);
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 4);
+    }
+
+    #[test]
+    fn blocked_pawn_jumping() {
+        let board = Board::from_tqbn(&String::from(
+            "f3f40910nnnnnnnnnnnnnhnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+        ));
+        for child in only_pawn_moves(&board, board.moves()) {
+            assert_ne!(board.move_string_to(&child), "f2");
+        }
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 5);
+
+        let board = Board::from_tqbn(&String::from(
+            "f3f40910nnnnnnnnnnnnvhnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+        ));
+		board.print();
+        for child in only_pawn_moves(&board, board.moves()) {
+            assert_ne!(board.move_string_to(&child), "e3");
+        }
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 4);
     }
 }
