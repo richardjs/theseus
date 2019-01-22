@@ -484,7 +484,6 @@ mod tests {
         let board = Board::from_tqbn(&String::from(
             "f3f40910nnnnnnnnnnnnvhnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
         ));
-		board.print();
         for child in only_pawn_moves(&board, board.moves()) {
             assert_ne!(board.move_string_to(&child), "e3");
         }
