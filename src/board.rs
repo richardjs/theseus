@@ -3,22 +3,24 @@ pub enum Player {
     White = 0,
     Black = 1,
 }
+use Player::*;
 
 impl Player {
     pub fn other(&self) -> Player {
         match self {
-            Player::White => Player::Black,
-            Player::Black => Player::White,
+            White => Black,
+            Black => White,
         }
     }
 }
 
 impl Default for Player {
     fn default() -> Self {
-        Player::White
+        White
     }
 }
 
+#[derive(Debug)]
 enum Direction {
     North,
     South,
@@ -99,7 +101,7 @@ impl Board {
             remaining_walls: [10, 10],
             hwalls: 0,
             vwalls: 0,
-            turn: Player::White,
+            turn: White,
         }
     }
 
@@ -132,8 +134,8 @@ impl Board {
             hwalls,
             vwalls,
             turn: match tqbn[72] {
-                '1' => Player::White,
-                '2' => Player::Black,
+                '1' => White,
+                '2' => Black,
                 _ => panic!(),
             },
         }
@@ -212,7 +214,6 @@ impl Board {
 
         // wall placements
         // we're going to start with a fairly naive algorithm, and optimize later
-        // TODO checking for blocked paths
         if self.remaining_walls[turn] == 0 {
             return moves;
         }
@@ -228,7 +229,9 @@ impl Board {
                 child.hwalls |= wall_bit;
                 child.remaining_walls[turn] -= 1;
                 child.turn = child.turn.other();
-                moves.push(child);
+                if child.paths_exist() {
+                    moves.push(child);
+                }
             }
             if (i < 8 || ((wall_bit >> 8) & self.vwalls) == 0)
                 && (i > 55 || ((wall_bit << 8) & self.vwalls == 0))
@@ -237,11 +240,65 @@ impl Board {
                 child.vwalls |= wall_bit;
                 child.remaining_walls[turn] -= 1;
                 child.turn = child.turn.other();
-                moves.push(child);
+                if child.paths_exist() {
+                    moves.push(child);
+                }
             }
         }
 
         moves
+    }
+
+    fn paths_exist(&self) -> bool {
+        let mut white_path = false;
+        let mut queue = vec![self.pawns[White as usize]];
+        let mut crumbs = [false; 81];
+        crumbs[queue[0] as usize] = true;
+        while queue.len() > 0 && !white_path {
+            let sqnum = queue.pop().unwrap();
+
+            for direction in [North, South, East, West].iter() {
+                if !self.is_open(sqnum, direction) {
+                    continue;
+                }
+                let move_sqnum = direction.move_sqnum(sqnum);
+                if move_sqnum < 9 {
+                    white_path = true;
+                    break;
+                }
+                if crumbs[move_sqnum as usize] {
+                    continue;
+                }
+                queue.insert(0, move_sqnum);
+                crumbs[move_sqnum as usize] = true;
+            }
+        }
+
+        let mut black_path = false;
+        let mut queue = vec![self.pawns[Black as usize]];
+        let mut crumbs = [false; 81];
+        crumbs[queue[0] as usize] = true;
+        while queue.len() > 0 && !black_path {
+            let sqnum = queue.pop().unwrap();
+
+            for direction in [North, South, East, West].iter() {
+                if !self.is_open(sqnum, direction) {
+                    continue;
+                }
+                let move_sqnum = direction.move_sqnum(sqnum);
+                if move_sqnum > 71 {
+                    black_path = true;
+                    break;
+                }
+                if crumbs[move_sqnum as usize] {
+                    continue;
+                }
+                queue.insert(0, move_sqnum);
+                crumbs[move_sqnum as usize] = true;
+            }
+        }
+
+        white_path && black_path
     }
 
     pub fn print(&self) {
@@ -252,9 +309,9 @@ impl Board {
                 let sqnum = row * 9 + col;
                 let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
                 let ne_wall = if se_wall > 7 { se_wall - 8 } else { 0 };
-                if self.pawns[Player::White as usize] == sqnum {
+                if self.pawns[White as usize] == sqnum {
                     eprint!("W");
-                } else if self.pawns[Player::Black as usize] == sqnum {
+                } else if self.pawns[Black as usize] == sqnum {
                     eprint!("B");
                 } else {
                     eprint!(".");
@@ -341,7 +398,7 @@ mod tests {
     #[test]
     fn simple_wall_blocking() {
         let mut board = Board::new();
-        board.pawns[Player::White as usize] = 12;
+        board.pawns[White as usize] = 12;
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 4);
         board.hwalls |= 1 << 2;
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 3);
@@ -370,13 +427,13 @@ mod tests {
     #[test]
     fn corner_moves() {
         let mut board = Board::new();
-        board.pawns[Player::White as usize] = 0;
+        board.pawns[White as usize] = 0;
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
-        board.pawns[Player::White as usize] = 8;
+        board.pawns[White as usize] = 8;
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
-        board.pawns[Player::White as usize] = 72;
+        board.pawns[White as usize] = 72;
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
-        board.pawns[Player::White as usize] = 80;
+        board.pawns[White as usize] = 80;
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 2);
     }
 
@@ -391,7 +448,7 @@ mod tests {
         assert_eq!(board.remaining_walls[1], 10);
         assert_eq!(board.hwalls, 0);
         assert_eq!(board.vwalls, 0);
-        assert_eq!(board.turn, Player::White);
+        assert_eq!(board.turn, White);
     }
 
     #[test]
@@ -488,5 +545,15 @@ mod tests {
             assert_ne!(board.move_string_to(&child), "e3");
         }
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 4);
+    }
+
+    #[test]
+    fn keep_paths_open() {
+        let board = Board::from_tqbn(&String::from(
+            "e9e10910nnnnnnnnhnhnhnhnnnnnnnnhnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+        ));
+        for child in board.moves() {
+            assert_ne!(board.move_string_to(&child), "h2v");
+        }
     }
 }
