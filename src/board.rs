@@ -145,6 +145,25 @@ impl Board {
         self.turn
     }
 
+    pub fn winner(&self) -> Option<Player> {
+        match self.turn.other() {
+            White => {
+                if self.pawns[White as usize] < 9 {
+                    Some(White)
+                } else {
+                    None
+                }
+            }
+            Black => {
+                if self.pawns[Black as usize] > 71 {
+                    Some(Black)
+                } else {
+                    None
+                }
+            }
+        }
+    }
+
     fn is_open(&self, sqnum: u8, direction: &Direction) -> bool {
         let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
         let sw_wall = if se_wall > 0 { se_wall - 1 } else { 0 };
