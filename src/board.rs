@@ -25,8 +25,27 @@ enum Direction {
     East,
     West,
 }
-
 use Direction::*;
+
+impl Direction {
+    fn left(&self) -> Direction {
+        match self {
+            North => West,
+            South => East,
+            East => North,
+            West => South,
+        }
+    }
+
+    fn right(&self) -> Direction {
+        match self {
+            North => East,
+            South => West,
+            East => South,
+            West => North,
+        }
+    }
+}
 
 /// squares are numbered, left-to-right, top-to-bottom, starting at a9
 pub fn sqnum_for_coord(col: char, row: u8) -> u8 {
@@ -146,36 +165,68 @@ impl Board {
 
     pub fn moves(&self) -> Vec<Board> {
         let turn = self.turn as usize;
+        let other = self.turn.other() as usize;
         let pawn = self.pawns[turn];
 
         let mut moves = vec![];
 
         // pawn movements
-        // TODO hopping over pawns
+        // TODO hopping over pawns when wall blocks
         if self.is_open(pawn, North) {
             let mut child = self.clone();
             child.pawns[turn] = pawn - 9;
             child.turn = child.turn.other();
 
-            moves.push(child);
+            if child.pawns[turn] == child.pawns[other] {
+                if self.is_open(child.pawns[turn], North) {
+                    child.pawns[turn] -= 9;
+                    moves.push(child);
+                }
+            } else {
+                moves.push(child);
+            }
         }
         if self.is_open(pawn, South) {
             let mut child = self.clone();
             child.pawns[turn] = pawn + 9;
             child.turn = child.turn.other();
-            moves.push(child);
+
+            if child.pawns[turn] == child.pawns[other] {
+                if self.is_open(child.pawns[turn], South) {
+                    child.pawns[turn] += 9;
+                    moves.push(child);
+                }
+            } else {
+                moves.push(child);
+            }
         }
         if self.is_open(pawn, East) {
             let mut child = self.clone();
             child.pawns[turn] = pawn + 1;
             child.turn = child.turn.other();
-            moves.push(child);
+
+            if child.pawns[turn] == child.pawns[other] {
+                if self.is_open(child.pawns[turn], East) {
+                    child.pawns[turn] += 1;
+                    moves.push(child);
+                }
+            } else {
+                moves.push(child);
+            }
         }
         if self.is_open(pawn, West) {
             let mut child = self.clone();
             child.pawns[turn] = pawn - 1;
             child.turn = child.turn.other();
-            moves.push(child);
+
+            if child.pawns[turn] == child.pawns[other] {
+                if self.is_open(child.pawns[turn], West) {
+                    child.pawns[turn] -= 1;
+                    moves.push(child);
+                }
+            } else {
+                moves.push(child);
+            }
         }
 
         // wall placements
@@ -368,17 +419,74 @@ mod tests {
             "e9e10506nnnnnnnnnnvnnnnnnnhnnnnnnnnnnhnnnnvnvnnvnnnnhnnnhnnnnnnnnnnnhnnn2",
         );
         for child in board.moves() {
-            board.print();
-            child.print();
             assert_ne!(board.move_string_to(&child), "c1v");
         }
         let board = Board::from_tqbn(
             "e9e10606nnnhvnnnnnnnnnnnnnnnnnnnnnvnvnnnnnnnnnvnnnvnnnnnnnnnvnnnnnnvnnnn1",
         );
         for child in board.moves() {
-            board.print();
-            child.print();
             assert_ne!(board.move_string_to(&child), "e3v");
         }
+    }
+
+    #[test]
+    fn simple_pawn_jumping() {
+        // jump to the north
+        let board = Board::from_tqbn(&String::from(
+            "e4e51010nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+        ));
+        let mut jumped = false;
+        for child in only_pawn_moves(&board, board.moves()) {
+            if board.move_string_to(&child) == "e3" {
+                jumped = true;
+                break;
+            }
+        }
+        assert!(jumped);
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 4);
+
+        // jump to the south
+        let board = Board::from_tqbn(&String::from(
+            "e5e41010nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+        ));
+        let mut jumped = false;
+        for child in only_pawn_moves(&board, board.moves()) {
+            if board.move_string_to(&child) == "e6" {
+                jumped = true;
+                break;
+            }
+        }
+        assert!(jumped);
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 4);
+
+        // jump to the east
+        let board = Board::from_tqbn(&String::from(
+            "e4d41010nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+        ));
+        let mut jumped = false;
+        for child in only_pawn_moves(&board, board.moves()) {
+            child.print();
+            if board.move_string_to(&child) == "f4" {
+                jumped = true;
+                break;
+            }
+        }
+        assert!(jumped);
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 4);
+
+        // jump to the west
+        let board = Board::from_tqbn(&String::from(
+            "d4e41010nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+        ));
+        let mut jumped = false;
+        for child in only_pawn_moves(&board, board.moves()) {
+            child.print();
+            if board.move_string_to(&child) == "c4" {
+                jumped = true;
+                break;
+            }
+        }
+        assert!(jumped);
+        assert_eq!(only_pawn_moves(&board, board.moves()).len(), 4);
     }
 }
