@@ -5,7 +5,7 @@ pub enum Player {
 }
 
 impl Player {
-    pub fn other(self) -> Player {
+    pub fn other(&self) -> Player {
         match self {
             Player::White => Player::Black,
             Player::Black => Player::White,
