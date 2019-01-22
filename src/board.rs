@@ -19,6 +19,15 @@ impl Default for Player {
     }
 }
 
+enum Direction {
+    North,
+    South,
+    East,
+    West,
+}
+
+use Direction::*;
+
 /// squares are numbered, left-to-right, top-to-bottom, starting at a9
 pub fn sqnum_for_coord(col: char, row: u8) -> u8 {
     (row - 1) * 9 + (col.to_ascii_lowercase() as u8) - 97
@@ -106,6 +115,35 @@ impl Board {
         self.turn
     }
 
+    fn is_open(&self, sqnum: u8, direction: Direction) -> bool {
+        let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
+        let sw_wall = if se_wall > 0 { se_wall - 1 } else { 0 };
+        let nw_wall = if se_wall > 9 { se_wall - 9 } else { 0 };
+        let ne_wall = if se_wall > 8 { se_wall - 8 } else { 0 };
+        match direction {
+            North => {
+                sqnum > 8
+                    && (sqnum % 9 == 0 || ((1 << nw_wall) & self.hwalls) == 0)
+                    && ((sqnum + 1) % 9 == 0 || ((1 << ne_wall) & self.hwalls) == 0)
+            }
+            South => {
+                sqnum < 72
+                    && (sqnum % 9 == 0 || ((1 << sw_wall) & self.hwalls) == 0)
+                    && ((sqnum + 1) % 9 == 0 || ((1 << se_wall) & self.hwalls) == 0)
+            }
+            East => {
+                (sqnum + 1) % 9 != 0
+                    && (sqnum < 9 || ((1 << ne_wall) & self.vwalls) == 0)
+                    && (sqnum > 71 || ((1 << se_wall) & self.vwalls) == 0)
+            }
+            West => {
+                (sqnum) % 9 != 0
+                    && (sqnum < 9 || ((1 << nw_wall) & self.vwalls) == 0)
+                    && (sqnum > 71 || ((1 << sw_wall) & self.vwalls) == 0)
+            }
+        }
+    }
+
     pub fn moves(&self) -> Vec<Board> {
         let turn = self.turn as usize;
         let pawn = self.pawns[turn];
@@ -113,46 +151,27 @@ impl Board {
         let mut moves = vec![];
 
         // pawn movements
-        let se_wall = (pawn / 9) * 8 + (pawn % 9);
-        let sw_wall = if se_wall > 0 { se_wall - 1 } else { 0 };
-        let nw_wall = if se_wall > 9 { se_wall - 9 } else { 0 };
-        let ne_wall = if se_wall > 8 { se_wall - 8 } else { 0 };
         // TODO hopping over pawns
-        // north
-        if pawn > 8
-            && (pawn % 9 == 0 || ((1 << nw_wall) & self.hwalls) == 0)
-            && ((pawn + 1) % 9 == 0 || ((1 << ne_wall) & self.hwalls) == 0)
-        {
+        if self.is_open(pawn, North) {
             let mut child = self.clone();
             child.pawns[turn] = pawn - 9;
             child.turn = child.turn.other();
+
             moves.push(child);
         }
-        // south
-        if pawn < 72
-            && (pawn % 9 == 0 || ((1 << sw_wall) & self.hwalls) == 0)
-            && ((pawn + 1) % 9 == 0 || ((1 << se_wall) & self.hwalls) == 0)
-        {
+        if self.is_open(pawn, South) {
             let mut child = self.clone();
             child.pawns[turn] = pawn + 9;
             child.turn = child.turn.other();
             moves.push(child);
         }
-        // east
-        if (pawn + 1) % 9 != 0
-            && (pawn < 9 || ((1 << ne_wall) & self.vwalls) == 0)
-            && (pawn > 71 || ((1 << se_wall) & self.vwalls) == 0)
-        {
+        if self.is_open(pawn, East) {
             let mut child = self.clone();
             child.pawns[turn] = pawn + 1;
             child.turn = child.turn.other();
             moves.push(child);
         }
-        // west
-        if (pawn) % 9 != 0
-            && (pawn < 9 || ((1 << nw_wall) & self.vwalls) == 0)
-            && (pawn > 71 || ((1 << sw_wall) & self.vwalls) == 0)
-        {
+        if self.is_open(pawn, West) {
             let mut child = self.clone();
             child.pawns[turn] = pawn - 1;
             child.turn = child.turn.other();
