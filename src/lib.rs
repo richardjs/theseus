@@ -1,3 +1,5 @@
+pub mod ai;
+
 pub mod board;
 pub use crate::board::Board;
 
