@@ -145,6 +145,10 @@ impl Board {
         self.turn
     }
 
+    pub fn remaining_walls(&self) -> [u8; 2] {
+        self.remaining_walls
+    }
+
     pub fn winner(&self) -> Option<Player> {
         match self.turn.other() {
             White => {
@@ -334,6 +338,40 @@ impl Board {
         }
 
         white_path && black_path
+    }
+
+    pub fn shortest_path(&self, player: Player) -> Vec<u8> {
+        let mut queue = vec![vec![self.pawns[player as usize]]];
+        let mut crumbs = [false; 81];
+        crumbs[queue[0][0] as usize] = true;
+        while queue.len() > 0 {
+            let path = queue.pop().unwrap();
+            let sqnum = path.last().unwrap();
+
+            for direction in [North, South, East, West].iter() {
+                if !self.is_open(*sqnum, direction) {
+                    continue;
+                }
+                let move_sqnum = direction.move_sqnum(*sqnum);
+                if player == White {
+                    if move_sqnum < 9 {
+                        return path;
+                    }
+                } else {
+                    if move_sqnum > 71 {
+                        return path;
+                    }
+                }
+                if crumbs[move_sqnum as usize] {
+                    continue;
+                }
+                let mut new_path = path.clone();
+                new_path.push(move_sqnum);
+                queue.insert(0, new_path);
+                crumbs[move_sqnum as usize] = true;
+            }
+        }
+        Vec::new()
     }
 
     pub fn print(&self) {
