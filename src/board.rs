@@ -193,7 +193,7 @@ impl Board {
         }
     }
 
-    pub fn moves(&self) -> Vec<Board> {
+    pub fn moves_detailed(&self, validate_paths: bool) -> Vec<Board> {
         let turn = self.turn as usize;
         let other = self.turn.other() as usize;
         let pawn = self.pawns[turn];
@@ -248,7 +248,7 @@ impl Board {
                 child.hwalls |= wall_bit;
                 child.remaining_walls[turn] -= 1;
                 child.turn = child.turn.other();
-                if child.paths_exist() {
+                if !validate_paths || child.paths_exist() {
                     moves.push(child);
                 }
             }
@@ -259,13 +259,17 @@ impl Board {
                 child.vwalls |= wall_bit;
                 child.remaining_walls[turn] -= 1;
                 child.turn = child.turn.other();
-                if child.paths_exist() {
+                if !validate_paths || child.paths_exist() {
                     moves.push(child);
                 }
             }
         }
 
         moves
+    }
+
+    pub fn moves(&self) -> Vec<Board> {
+        self.moves_detailed(true)
     }
 
     fn paths_exist(&self) -> bool {
