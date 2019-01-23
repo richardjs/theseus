@@ -193,7 +193,7 @@ impl Board {
         }
     }
 
-    pub fn moves_detailed(&self, validate_paths: bool) -> Vec<Board> {
+    pub fn moves_detailed(&self, validate_paths: bool, return_wins: bool) -> Vec<Board> {
         let turn = self.turn as usize;
         let other = self.turn.other() as usize;
         let pawn = self.pawns[turn];
@@ -213,20 +213,32 @@ impl Board {
             if child.pawns[turn] == child.pawns[other] {
                 if self.is_open(child.pawns[turn], direction) {
                     child.pawns[turn] = direction.move_sqnum(child.pawns[turn]);
+                    if return_wins && child.winner().is_some() {
+                        return vec![child];
+                    }
                     moves.push(child);
                 } else {
                     if self.is_open(child.pawns[turn], &direction.left()) {
                         // clone the child in case we also can jump to the right
                         let mut child = child.clone();
                         child.pawns[turn] = direction.left().move_sqnum(child.pawns[turn]);
+                        if return_wins && child.winner().is_some() {
+                            return vec![child];
+                        }
                         moves.push(child);
                     }
                     if self.is_open(child.pawns[turn], &direction.right()) {
                         child.pawns[turn] = direction.right().move_sqnum(child.pawns[turn]);
+                        if return_wins && child.winner().is_some() {
+                            return vec![child];
+                        }
                         moves.push(child);
                     }
                 }
             } else {
+                if return_wins && child.winner().is_some() {
+                    return vec![child];
+                }
                 moves.push(child);
             }
         }
@@ -269,10 +281,10 @@ impl Board {
     }
 
     pub fn moves(&self) -> Vec<Board> {
-        self.moves_detailed(true)
+        self.moves_detailed(true, false)
     }
 
-    fn paths_exist(&self) -> bool {
+    pub fn paths_exist(&self) -> bool {
         let mut white_path = false;
         let mut queue = vec![self.pawns[White as usize]];
         let mut crumbs = [false; 81];
