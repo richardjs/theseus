@@ -2,7 +2,7 @@ use crate::Board;
 
 use rand::seq::SliceRandom;
 
-const ITERATIONS: u32 = 100;
+const ITERATIONS: u32 = 500;
 
 pub fn mc(board: &Board) -> Board {
     let mut rng = rand::thread_rng();
@@ -21,6 +21,12 @@ pub fn mc(board: &Board) -> Board {
             let mut current = child.clone();
             let mut winner = None;
             while winner.is_none() {
+                if current.remaining_walls()[current.turn() as usize]
+                    > current.remaining_walls()[current.turn().other() as usize] + 2
+                {
+                    winner = Some(current.turn());
+                    break;
+                }
                 if current.remaining_walls()[0] == 0 && current.remaining_walls()[1] == 0 {
                     if current.shortest_path(current.turn()).len()
                         <= current.shortest_path(current.turn().other()).len()
