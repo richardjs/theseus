@@ -13,7 +13,7 @@ fn main() {
     let board = theseus::Board::from_tqbn(tqbn);
     board.print();
 
-    let child = theseus::ai::mc(&board);
+    let child = theseus::ai::minimax(&board);
     let move_string = board.move_string_to(&child);
     eprintln!("output: {}", move_string);
     child.print();
