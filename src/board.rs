@@ -145,6 +145,10 @@ impl Board {
         self.turn
     }
 
+    pub fn pawns(&self) -> [u8; 2] {
+        self.pawns
+    }
+
     pub fn remaining_walls(&self) -> [u8; 2] {
         self.remaining_walls
     }
