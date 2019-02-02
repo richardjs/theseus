@@ -5,4 +5,6 @@ authors = ["Richard Schneider <rschneider@harding.edu>"]
 edition = "2018"
 
 [dependencies]
+clap = "2.32.0"
 rand = "0.6"
+rocket = "0.4.0"

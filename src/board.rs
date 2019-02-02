@@ -111,7 +111,7 @@ impl Board {
 
         let mut hwalls = 0;
         let mut vwalls = 0;
-        for (i, c) in tqbn[8..72].into_iter().enumerate() {
+        for (i, c) in tqbn[0..64].into_iter().enumerate() {
             match c.to_ascii_lowercase() {
                 'h' => hwalls |= 1 << i,
                 'v' => vwalls |= 1 << i,
@@ -124,16 +124,24 @@ impl Board {
 
         Board {
             pawns: [
-                sqnum_for_coord(tqbn[0], tqbn[1].to_digit(10).unwrap() as u8),
-                sqnum_for_coord(tqbn[2], tqbn[3].to_digit(10).unwrap() as u8),
+                sqnum_for_coord(tqbn[65], tqbn[66].to_digit(10).unwrap() as u8),
+                sqnum_for_coord(tqbn[69], tqbn[70].to_digit(10).unwrap() as u8),
             ],
             remaining_walls: [
-                tqbn[4..6].iter().collect::<String>().parse::<u8>().unwrap(),
-                tqbn[6..8].iter().collect::<String>().parse::<u8>().unwrap(),
+                tqbn[67..69]
+                    .iter()
+                    .collect::<String>()
+                    .parse::<u8>()
+                    .unwrap(),
+                tqbn[71..73]
+                    .iter()
+                    .collect::<String>()
+                    .parse::<u8>()
+                    .unwrap(),
             ],
             hwalls,
             vwalls,
-            turn: match tqbn[72] {
+            turn: match tqbn[64] {
                 '1' => White,
                 '2' => Black,
                 _ => panic!(),
@@ -378,49 +386,55 @@ impl Board {
         Vec::new()
     }
 
-    pub fn print(&self) {
-        eprintln!("  a   b   c   d   e   f   g   h   i");
+    pub fn to_string(&self) -> String {
+        let mut s = String::new();
+        s.push_str("  a   b   c   d   e   f   g   h   i\n");
         for row in 0..9 {
-            eprint!("{} ", row + 1);
+            s.push_str(&format!("{} ", row + 1));
             for col in 0..9 {
                 let sqnum = row * 9 + col;
                 let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
                 let ne_wall = if se_wall > 7 { se_wall - 8 } else { 0 };
                 if self.pawns[White as usize] == sqnum {
-                    eprint!("W");
+                    s.push('W');
                 } else if self.pawns[Black as usize] == sqnum {
-                    eprint!("B");
+                    s.push('B');
                 } else {
-                    eprint!(".");
+                    s.push('.');
                 }
                 if col != 8 {
                     if (sqnum > 8 && (self.vwalls & (1 << ne_wall)) > 0)
                         || (sqnum < 72 && (self.vwalls & (1 << se_wall)) > 0)
                     {
-                        eprint!(" # ");
+                        s.push_str(" # ");
                     } else {
-                        eprint!("   ");
+                        s.push_str("   ");
                     }
                 }
             }
-            eprintln!();
+            s.push('\n');
             if row < 8 {
                 for col in 0..9 {
-                    eprint!("  ");
+                    s.push_str("  ");
                     let sqnum = row * 9 + col;
                     let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
                     let sw_wall = if se_wall > 1 { se_wall - 1 } else { 0 };
                     if ((sqnum + 1) % 9 != 0 && (self.hwalls & (1 << se_wall)) > 0)
                         || (sqnum % 9 != 0) && (self.hwalls & (1 << sw_wall) > 0)
                     {
-                        eprint!("# ");
+                        s.push_str("# ");
                     } else {
-                        eprint!("  ");
+                        s.push_str("  ");
                     }
                 }
-                eprintln!();
+                s.push('\n');
             }
         }
+        s
+    }
+
+    pub fn print(&self) {
+        eprint!("{}", self.to_string());
     }
 
     pub fn move_string_to(&self, child: &Board) -> String {

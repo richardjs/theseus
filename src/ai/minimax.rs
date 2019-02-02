@@ -27,8 +27,8 @@ fn search(board: &Board, depth: u8) -> i32 {
             }
         }
         return 2
-            * (board.remaining_walls()[board.turn() as usize]
-                - board.remaining_walls()[board.turn().other() as usize]) as i32
+            * (board.remaining_walls()[board.turn() as usize] as i32
+                - board.remaining_walls()[board.turn().other() as usize] as i32)
             + 1 * (board.shortest_path(board.turn().other()).len() as i32
                 - board.shortest_path(board.turn()).len() as i32);
     }
