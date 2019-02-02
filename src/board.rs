@@ -531,7 +531,7 @@ mod tests {
     #[test]
     fn load_tqbn() {
         let board = Board::from_tqbn(&String::from(
-            "e9e11010nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn1",
+            "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn1e910e110",
         ));
         assert_eq!(board.pawns[0], 76);
         assert_eq!(board.pawns[1], 4);
@@ -545,13 +545,13 @@ mod tests {
     #[test]
     fn vertical_wall_place_bug() {
         let board = Board::from_tqbn(
-            "e9e10506nnnnnnnnnnvnnnnnnnhnnnnnnnnnnhnnnnvnvnnvnnnnhnnnhnnnnnnnnnnnhnnn2",
+            "nnnnnnnnnnvnnnnnnnhnnnnnnnnnnhnnnnvnvnnvnnnnhnnnhnnnnnnnnnnnhnnn2e905e106",
         );
         for child in board.moves() {
             assert_ne!(board.move_string_to(&child), "c1v");
         }
         let board = Board::from_tqbn(
-            "e9e10606nnnhvnnnnnnnnnnnnnnnnnnnnnvnvnnnnnnnnnvnnnvnnnnnnnnnvnnnnnnvnnnn1",
+            "nnnhvnnnnnnnnnnnnnnnnnnnnnvnvnnnnnnnnnvnnnvnnnnnnnnnvnnnnnnvnnnn1e906e106",
         );
         for child in board.moves() {
             assert_ne!(board.move_string_to(&child), "e3v");
@@ -562,7 +562,7 @@ mod tests {
     fn simple_pawn_jumping() {
         // jump to the north
         let board = Board::from_tqbn(&String::from(
-            "e4e51010nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+            "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2e410e510",
         ));
         let mut jumped = false;
         for child in only_pawn_moves(&board, board.moves()) {
@@ -576,7 +576,7 @@ mod tests {
 
         // jump to the south
         let board = Board::from_tqbn(&String::from(
-            "e5e41010nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+            "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2e510e410",
         ));
         let mut jumped = false;
         for child in only_pawn_moves(&board, board.moves()) {
@@ -590,7 +590,7 @@ mod tests {
 
         // jump to the east
         let board = Board::from_tqbn(&String::from(
-            "e4d41010nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+            "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2e410d410",
         ));
         let mut jumped = false;
         for child in only_pawn_moves(&board, board.moves()) {
@@ -605,7 +605,7 @@ mod tests {
 
         // jump to the west
         let board = Board::from_tqbn(&String::from(
-            "d4e41010nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+            "nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2d410e410",
         ));
         let mut jumped = false;
         for child in only_pawn_moves(&board, board.moves()) {
@@ -622,7 +622,7 @@ mod tests {
     #[test]
     fn blocked_pawn_jumping() {
         let board = Board::from_tqbn(&String::from(
-            "f3f40910nnnnnnnnnnnnnhnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+            "nnnnnnnnnnnnnhnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2f309f410",
         ));
         for child in only_pawn_moves(&board, board.moves()) {
             assert_ne!(board.move_string_to(&child), "f2");
@@ -630,7 +630,7 @@ mod tests {
         assert_eq!(only_pawn_moves(&board, board.moves()).len(), 5);
 
         let board = Board::from_tqbn(&String::from(
-            "f3f40910nnnnnnnnnnnnvhnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+            "nnnnnnnnnnnnvhnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2f309f410",
         ));
         for child in only_pawn_moves(&board, board.moves()) {
             assert_ne!(board.move_string_to(&child), "e3");
@@ -641,7 +641,7 @@ mod tests {
     #[test]
     fn keep_paths_open() {
         let board = Board::from_tqbn(&String::from(
-            "e9e10910nnnnnnnnhnhnhnhnnnnnnnnhnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2",
+            "nnnnnnnnhnhnhnhnnnnnnnnhnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn2e909e110",
         ));
         for child in board.moves() {
             assert_ne!(board.move_string_to(&child), "h2v");
