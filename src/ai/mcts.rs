@@ -8,7 +8,9 @@ use crate::board::Board;
 use crate::board::Player;
 
 const ITERATIONS: u32 = 50000;
-const UCTC: f64 = 1.0;
+const UCTC: f64 = 1000.0;
+const UCTW: f64 = 1000.0;
+const MOVE_PROBABILITY: f64 = 0.9;
 const SIM_THRESHOLD: u32 = 5;
 
 struct Node {
@@ -86,7 +88,16 @@ fn solver(node: &Rc<RefCell<Node>>) -> f64 {
             break;
         }
 
-        let uct = -c.value + (UCTC * (node.visits as f64).ln() / c.visits as f64).sqrt();
+        let probability = if node.board.pawns()[node.board.turn() as usize]
+            == c.board.pawns()[node.board.turn() as usize]
+        {
+            1.0 - MOVE_PROBABILITY
+        } else {
+            MOVE_PROBABILITY
+        };
+        let uct = -c.value
+            + (UCTC * (node.visits as f64).ln() / c.visits as f64).sqrt()
+            + (UCTW * probability / (c.visits + 1) as f64);
         if uct > best_uct {
             selected = child;
             best_uct = uct;
@@ -140,8 +151,18 @@ pub fn mcts(board: &Board, log: &mut String) -> Board {
         }
     }
 
-    log.push_str(&format!("value:\t{}\n", -best_child.borrow().value));
-    log.push_str(&format!("visits:\t{}\n", best_child.borrow().visits));
+    log.push_str(&format!("moves:\t\t{}\n", root.borrow().children.len()));
+    log.push_str(&format!("visits:\t\t{}\n", best_child.borrow().visits));
+    log.push_str(&format!(
+        "visit %:\t{}%\n",
+        100.0 * best_child.borrow().visits as f64 / ITERATIONS as f64
+    ));
+    log.push_str(&format!(
+        "focus:\t\t{}\n",
+        (best_child.borrow().visits as f64)
+            / (ITERATIONS as f64 / root.borrow().children.len() as f64)
+    ));
+    log.push_str(&format!("value:\t\t{}\n", -best_child.borrow().value));
 
     let board = best_child.borrow().board.clone();
     board
