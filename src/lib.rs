@@ -2,8 +2,9 @@
 #[macro_use]
 extern crate rocket;
 
-pub mod api;
-pub mod cli;
+pub mod ui;
+pub use crate::ui::api;
+pub use crate::ui::cli;
 //pub mod tui;
 
 pub mod board;

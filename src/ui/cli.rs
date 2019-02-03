@@ -35,7 +35,9 @@ pub fn cli() {
             let board = crate::Board::from_tqbn(tqbn);
             board.print();
 
-            let child = crate::ai::minimax(&board);
+            let mut log = String::new();
+            let child = crate::ai::mcts(&board, &mut log);
+            eprintln!("{}", log);
             let move_string = board.move_string_to(&child);
             eprintln!("output: {}", move_string);
             child.print();
