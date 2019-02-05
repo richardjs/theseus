@@ -387,40 +387,40 @@ impl Board {
     }
 
     /// returns an array of steps needed to reach each sqnum
-    pub fn walk_paths(&self, player: Player) -> [u8; 81] {
-	let pawn = self.pawns()[player as usize];
-	let mut walk = vec![self.pawns()[player as usize]];
-	let mut counts = [0; 81];
-	let mut steps = 1;
+    pub fn walk_paths(&self, player: Player) -> [u32; 81] {
+        let pawn = self.pawns()[player as usize];
+        let mut walk = vec![self.pawns()[player as usize]];
+        let mut counts = [0; 81];
+        let mut steps = 1;
 
-	while walk.len() > 0 {
-	    let mut next_walk = Vec::new();
-	    for sqnum in &walk {
-		for direction in [North, South, East, West].iter() {
-		    if !self.is_open(*sqnum, direction) {
-			continue;
-		    }
+        while walk.len() > 0 {
+            let mut next_walk = Vec::new();
+            for sqnum in &walk {
+                for direction in [North, South, East, West].iter() {
+                    if !self.is_open(*sqnum, direction) {
+                        continue;
+                    }
 
-		    let move_sqnum = direction.move_sqnum(*sqnum);
+                    let move_sqnum = direction.move_sqnum(*sqnum);
 
-		    if counts[move_sqnum as usize] > 0 || move_sqnum == pawn {
-			continue;
-		    }
+                    if counts[move_sqnum as usize] > 0 || move_sqnum == pawn {
+                        continue;
+                    }
 
-		    counts[move_sqnum as usize] = steps;
+                    counts[move_sqnum as usize] = steps;
 
-		    if (player == White && move_sqnum < 9) || (player == Black && move_sqnum > 71) {
-			continue;
-		    }
+                    if (player == White && move_sqnum < 9) || (player == Black && move_sqnum > 71) {
+                        continue;
+                    }
 
-		    next_walk.push(move_sqnum);
-		}
-	    }
-	    walk = next_walk;
-	    steps += 1;
-	}
+                    next_walk.push(move_sqnum);
+                }
+            }
+            walk = next_walk;
+            steps += 1;
+        }
 
-	counts
+        counts
     }
 
     pub fn to_string(&self) -> String {
