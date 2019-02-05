@@ -35,7 +35,7 @@ fn index(id: u64, tqbn: String) -> String {
     let board = crate::Board::from_tqbn(&tqbn.to_string());
     log.push_str(&board.to_string());
 
-    let child = crate::ai::mcts(&board, &mut log);
+    let child = crate::ai::default(&board, &mut log);
 
     let move_string = board.move_string_to(&child);
     log.push_str(&format!("output: {}\\n", move_string));
