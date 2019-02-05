@@ -21,7 +21,7 @@ impl Default for Player {
 }
 
 #[derive(Debug)]
-enum Direction {
+pub enum Direction {
     North,
     South,
     East,
@@ -180,7 +180,7 @@ impl Board {
         }
     }
 
-    fn is_open(&self, sqnum: u8, direction: &Direction) -> bool {
+    pub fn is_open(&self, sqnum: u8, direction: &Direction) -> bool {
         let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
         let sw_wall = if se_wall > 0 { se_wall - 1 } else { 0 };
         let nw_wall = if se_wall > 9 { se_wall - 9 } else { 0 };
@@ -384,6 +384,43 @@ impl Board {
             }
         }
         Vec::new()
+    }
+
+    /// returns an array of steps needed to reach each sqnum
+    pub fn walk_paths(&self, player: Player) -> [u8; 81] {
+	let pawn = self.pawns()[player as usize];
+	let mut walk = vec![self.pawns()[player as usize]];
+	let mut counts = [0; 81];
+	let mut steps = 1;
+
+	while walk.len() > 0 {
+	    let mut next_walk = Vec::new();
+	    for sqnum in &walk {
+		for direction in [North, South, East, West].iter() {
+		    if !self.is_open(*sqnum, direction) {
+			continue;
+		    }
+
+		    let move_sqnum = direction.move_sqnum(*sqnum);
+
+		    if counts[move_sqnum as usize] > 0 || move_sqnum == pawn {
+			continue;
+		    }
+
+		    counts[move_sqnum as usize] = steps;
+
+		    if (player == White && move_sqnum < 9) || (player == Black && move_sqnum > 71) {
+			continue;
+		    }
+
+		    next_walk.push(move_sqnum);
+		}
+	    }
+	    walk = next_walk;
+	    steps += 1;
+	}
+
+	counts
     }
 
     pub fn to_string(&self) -> String {
