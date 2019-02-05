@@ -92,6 +92,8 @@ pub struct Board {
 
     /// next player to move
     turn: Player,
+
+    shortest_path_cache: [Option<Vec<u8>>; 2],
 }
 
 impl Board {
@@ -102,6 +104,7 @@ impl Board {
             hwalls: 0,
             vwalls: 0,
             turn: White,
+	    shortest_path_cache: [None, None],
         }
     }
 
@@ -146,6 +149,7 @@ impl Board {
                 '2' => Black,
                 _ => panic!(),
             },
+	    shortest_path_cache: [None, None],
         }
     }
 
@@ -226,6 +230,18 @@ impl Board {
             child.pawns[turn] = direction.move_sqnum(pawn);
             child.turn = child.turn.other();
 
+	    if child.shortest_path_cache[turn].is_some() {
+		if child.shortest_path_cache[turn].unwrap().unwrap().first().unwrap() == child.pawns[turn];
+		/*
+		if *cache.first().unwrap() == child.pawns[turn]{
+		    child.shortest_path_cache[turn].unwrap().remove(0);
+		}else{
+		    child.shortest_path_cache[turn] = None;
+		}
+		*/
+	    }
+
+	    // jumping
             if child.pawns[turn] == child.pawns[other] {
                 if self.is_open(child.pawns[turn], direction) {
                     child.pawns[turn] = direction.move_sqnum(child.pawns[turn]);
@@ -352,7 +368,12 @@ impl Board {
         white_path && black_path
     }
 
-    pub fn shortest_path(&self, player: Player) -> Vec<u8> {
+    pub fn shortest_path(&mut self, player: Player) -> Vec<u8> {
+	// TODO test shortest path cache, including updating for moving along it and invalidating it
+	if let Some(cache) = self.shortest_path_cache[player as usize].clone() {
+	    return cache;
+	}
+
         let mut queue = vec![vec![self.pawns[player as usize]]];
         let mut crumbs = [false; 81];
         crumbs[queue[0][0] as usize] = true;
@@ -367,10 +388,12 @@ impl Board {
                 let move_sqnum = direction.move_sqnum(*sqnum);
                 if player == White {
                     if move_sqnum < 9 {
+			self.shortest_path_cache[player as usize] = Some(path.clone());
                         return path;
                     }
                 } else {
                     if move_sqnum > 71 {
+			self.shortest_path_cache[player as usize] = Some(path.clone());
                         return path;
                     }
                 }
