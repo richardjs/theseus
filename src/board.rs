@@ -238,8 +238,9 @@ impl Board {
             child.pawns[turn] = direction.move_sqnum(pawn);
             child.turn = child.turn.other();
 
+            let child_pawn = child.pawns[turn];
             if let Some(cache) = &mut child.shortest_path_cache[turn] {
-                if *cache.first().unwrap() == self.turn_pawn() {
+                if *cache.first().unwrap() == child_pawn {
                     cache.remove(0);
                     child.shortest_path_cache[turn] = Some(cache.to_vec());
                 } else {
@@ -398,11 +399,17 @@ impl Board {
                 let move_sqnum = direction.move_sqnum(*sqnum);
                 if player == White {
                     if move_sqnum < 9 {
+                        let mut path = path.clone();
+                        path.push(move_sqnum);
+                        path.remove(0);
                         self.shortest_path_cache[player as usize] = Some(path.clone());
                         return path;
                     }
                 } else {
                     if move_sqnum > 71 {
+                        let mut path = path.clone();
+                        path.push(move_sqnum);
+                        path.remove(0);
                         self.shortest_path_cache[player as usize] = Some(path.clone());
                         return path;
                     }
@@ -726,22 +733,20 @@ mod tests {
         board.shortest_path(White);
         assert_ne!(board.shortest_path_cache[0], None);
         assert_eq!(board.shortest_path_cache[1], None);
-        dbg!(&board.shortest_path_cache[0]);
-        return;
         board.shortest_path(Black);
         assert_ne!(board.shortest_path_cache[0], None);
         assert_ne!(board.shortest_path_cache[1], None);
         board = board.moves()[0].clone();
-        eprint!("{}", board.to_string());
         assert_ne!(board.shortest_path_cache[0], None);
         assert_ne!(board.shortest_path_cache[1], None);
         board = board.moves()[0].clone();
-        eprint!("{}", board.to_string());
         assert_ne!(board.shortest_path_cache[0], None);
         assert_ne!(board.shortest_path_cache[1], None);
         board = board.moves()[2].clone();
-        eprint!("{}", board.to_string());
-        assert_ne!(board.shortest_path_cache[0], None);
+        assert_eq!(board.shortest_path_cache[0], None);
         assert_ne!(board.shortest_path_cache[1], None);
+        board = board.moves()[50].clone();
+        assert_eq!(board.shortest_path_cache[0], None);
+        assert_eq!(board.shortest_path_cache[1], None);
     }
 }
