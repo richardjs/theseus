@@ -45,9 +45,10 @@ fn evaluate(board: &mut Board) -> f64 {
 
     (10 * (board.remaining_walls()[board.turn() as usize] as i32
         - board.remaining_walls()[board.turn().other() as usize] as i32)) as f64
-    + (10 * (board.shortest_path(board.turn().other()).len() as i32
-        - board.shortest_path(board.turn()).len() as i32)) as f64
-    + win_step_difference
+        + (10
+            * (board.shortest_path(board.turn().other()).len() as i32
+                - board.shortest_path(board.turn()).len() as i32)) as f64
+        + win_step_difference
 }
 
 fn search(board: &mut Board, depth: u8) -> f64 {
@@ -57,7 +58,7 @@ fn search(board: &mut Board, depth: u8) -> f64 {
 
     let mut best_score = -INFINITY;
     for child in board.moves() {
-	let mut child = child.clone();
+        let mut child = child.clone();
         let score = -search(&mut child, depth + 1);
         if score > best_score {
             best_score = score;
@@ -78,7 +79,7 @@ pub fn minimax(board: &Board, log: &mut String) -> Board {
     let mut best_score = -INFINITY;
     let mut best_child = board.moves()[0].clone();
     for child in board.moves() {
-	let mut child = child.clone();
+        let mut child = child.clone();
         let score = -search(&mut child, 1);
 
         if score > best_score {

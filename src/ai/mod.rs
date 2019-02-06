@@ -8,7 +8,7 @@ mod mcts;
 pub use mcts::mcts;
 
 pub fn default(board: &crate::Board, log: &mut String) -> crate::Board {
-    minimax(board, log)
+    mcts(board, log)
 }
 
 //mod random;
