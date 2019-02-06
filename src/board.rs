@@ -104,7 +104,7 @@ impl Board {
             hwalls: 0,
             vwalls: 0,
             turn: White,
-	    shortest_path_cache: [None, None],
+            shortest_path_cache: [None, None],
         }
     }
 
@@ -149,7 +149,7 @@ impl Board {
                 '2' => Black,
                 _ => panic!(),
             },
-	    shortest_path_cache: [None, None],
+            shortest_path_cache: [None, None],
         }
     }
 
@@ -162,11 +162,11 @@ impl Board {
     }
 
     pub fn turn_pawn(&self) -> u8 {
-	self.pawns[self.turn as usize]
+        self.pawns[self.turn as usize]
     }
 
     pub fn other_pawn(&self) -> u8 {
-	self.pawns[self.turn as usize]
+        self.pawns[self.turn as usize]
     }
 
     pub fn remaining_walls(&self) -> [u8; 2] {
@@ -238,15 +238,16 @@ impl Board {
             child.pawns[turn] = direction.move_sqnum(pawn);
             child.turn = child.turn.other();
 
-	    if let Some(cache) = &mut child.shortest_path_cache[turn] {
-		if *cache.first().unwrap() == self.turn_pawn() {
-		    cache.remove(0);
-		}else{
-		    child.shortest_path_cache[turn] = None;
-		}
-	    }
+            if let Some(cache) = &mut child.shortest_path_cache[turn] {
+                if *cache.first().unwrap() == self.turn_pawn() {
+                    cache.remove(0);
+                    child.shortest_path_cache[turn] = Some(cache.to_vec());
+                } else {
+                    child.shortest_path_cache[turn] = None;
+                }
+            }
 
-	    // jumping
+            // jumping
             if child.pawns[turn] == child.pawns[other] {
                 if self.is_open(child.pawns[turn], direction) {
                     child.pawns[turn] = direction.move_sqnum(child.pawns[turn]);
@@ -297,8 +298,8 @@ impl Board {
                 child.hwalls |= wall_bit;
                 child.remaining_walls[turn] -= 1;
                 child.turn = child.turn.other();
-		child.shortest_path_cache[White as usize] = None;
-		child.shortest_path_cache[Black as usize] = None;
+                child.shortest_path_cache[White as usize] = None;
+                child.shortest_path_cache[Black as usize] = None;
                 if !validate_paths || child.paths_exist() {
                     moves.push(child);
                 }
@@ -310,8 +311,8 @@ impl Board {
                 child.vwalls |= wall_bit;
                 child.remaining_walls[turn] -= 1;
                 child.turn = child.turn.other();
-		child.shortest_path_cache[White as usize] = None;
-		child.shortest_path_cache[Black as usize] = None;
+                child.shortest_path_cache[White as usize] = None;
+                child.shortest_path_cache[Black as usize] = None;
                 if !validate_paths || child.paths_exist() {
                     moves.push(child);
                 }
@@ -378,10 +379,10 @@ impl Board {
     }
 
     pub fn shortest_path(&mut self, player: Player) -> Vec<u8> {
-	// TODO test shortest path cache, and optimize it (for example, wall placement doesn't invalidate it if it doesn't intersect with it)
-	if let Some(cache) = self.shortest_path_cache[player as usize].clone() {
-	    return cache;
-	}
+        // TODO test shortest path cache, and optimize it (for example, wall placement doesn't invalidate it if it doesn't intersect with it)
+        if let Some(cache) = self.shortest_path_cache[player as usize].clone() {
+            return cache;
+        }
 
         let mut queue = vec![vec![self.pawns[player as usize]]];
         let mut crumbs = [false; 81];
@@ -397,12 +398,12 @@ impl Board {
                 let move_sqnum = direction.move_sqnum(*sqnum);
                 if player == White {
                     if move_sqnum < 9 {
-			self.shortest_path_cache[player as usize] = Some(path.clone());
+                        self.shortest_path_cache[player as usize] = Some(path.clone());
                         return path;
                     }
                 } else {
                     if move_sqnum > 71 {
-			self.shortest_path_cache[player as usize] = Some(path.clone());
+                        self.shortest_path_cache[player as usize] = Some(path.clone());
                         return path;
                     }
                 }
@@ -715,5 +716,32 @@ mod tests {
         for child in board.moves() {
             assert_ne!(board.move_string_to(&child), "h2v");
         }
+    }
+
+    #[test]
+    fn basic_shortest_path_cache_usage() {
+        let mut board = Board::new();
+        assert_eq!(board.shortest_path_cache[0], None);
+        assert_eq!(board.shortest_path_cache[1], None);
+        board.shortest_path(White);
+        assert_ne!(board.shortest_path_cache[0], None);
+        assert_eq!(board.shortest_path_cache[1], None);
+        dbg!(&board.shortest_path_cache[0]);
+        return;
+        board.shortest_path(Black);
+        assert_ne!(board.shortest_path_cache[0], None);
+        assert_ne!(board.shortest_path_cache[1], None);
+        board = board.moves()[0].clone();
+        eprint!("{}", board.to_string());
+        assert_ne!(board.shortest_path_cache[0], None);
+        assert_ne!(board.shortest_path_cache[1], None);
+        board = board.moves()[0].clone();
+        eprint!("{}", board.to_string());
+        assert_ne!(board.shortest_path_cache[0], None);
+        assert_ne!(board.shortest_path_cache[1], None);
+        board = board.moves()[2].clone();
+        eprint!("{}", board.to_string());
+        assert_ne!(board.shortest_path_cache[0], None);
+        assert_ne!(board.shortest_path_cache[1], None);
     }
 }
