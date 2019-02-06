@@ -37,7 +37,7 @@ pub fn cli() {
 
             let mut log = String::new();
             let child = crate::ai::default(&board, &mut log);
-            eprintln!("{}", log);
+            eprint!("{}", log);
             let move_string = board.move_string_to(&child);
             eprintln!("output: {}", move_string);
             child.print();
