@@ -20,7 +20,7 @@ fn count_win_steps(board: &Board, player: Player) -> u32 {
     sum
 }
 
-fn evaluate(board: &Board) -> f64 {
+fn evaluate(board: &mut Board) -> f64 {
     if let Some(winner) = board.winner() {
         if winner == board.turn() {
             return INFINITY;
@@ -50,14 +50,15 @@ fn evaluate(board: &Board) -> f64 {
     + win_step_difference
 }
 
-fn search(board: &Board, depth: u8) -> f64 {
+fn search(board: &mut Board, depth: u8) -> f64 {
     if depth == DEPTH {
         return evaluate(board);
     }
 
     let mut best_score = -INFINITY;
     for child in board.moves() {
-        let score = -search(&child, depth + 1);
+	let mut child = child.clone();
+        let score = -search(&mut child, depth + 1);
         if score > best_score {
             best_score = score;
         }
@@ -77,7 +78,8 @@ pub fn minimax(board: &Board, log: &mut String) -> Board {
     let mut best_score = -INFINITY;
     let mut best_child = board.moves()[0].clone();
     for child in board.moves() {
-        let score = -search(&child, 1);
+	let mut child = child.clone();
+        let score = -search(&mut child, 1);
 
         if score > best_score {
             best_score = score;
