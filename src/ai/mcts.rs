@@ -3,15 +3,17 @@ use std::f64::INFINITY;
 use std::rc::Rc;
 
 use rand::seq::SliceRandom;
+use rand::{thread_rng, Rng};
 
 use crate::board::Board;
 use crate::board::Player;
 
-const ITERATIONS: u32 = 50000;
+const ITERATIONS: u32 = 20000;
 const UCTC: f64 = 1000.0;
 const UCTW: f64 = 1000.0;
 const MOVE_PROBABILITY: f64 = 0.9;
 const SIM_THRESHOLD: u32 = 5;
+const PATH_MOVE_SIM_PROBABILTY: f64 = 0.95;
 
 struct Node {
     board: Board,
@@ -43,9 +45,10 @@ impl Node {
 }
 
 fn simulate(mut board: Board) -> Player {
-    let mut rng = rand::thread_rng();
+    let mut rng = thread_rng();
 
-    while board.winner().is_none() {
+    'turn: while board.winner().is_none() {
+        // early termination with no walls remaining
         if board.remaining_walls()[0] == 0 && board.remaining_walls()[1] == 0 {
             if board.shortest_path(board.turn()).len()
                 <= board.shortest_path(board.turn().other()).len()
@@ -53,6 +56,16 @@ fn simulate(mut board: Board) -> Player {
                 return board.turn();
             } else {
                 return board.turn().other();
+            }
+        }
+
+        // bias towards walking along shortest path
+        if rng.gen_bool(PATH_MOVE_SIM_PROBABILTY) {
+            for child in board.moves_detailed(false, true) {
+                if child.other_pawn() == *board.shortest_path(board.turn()).first().unwrap() && child.paths_exist() {
+                    board = child.clone();
+                    continue 'turn;
+                }
             }
         }
 
