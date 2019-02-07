@@ -166,7 +166,7 @@ impl Board {
     }
 
     pub fn other_pawn(&self) -> u8 {
-        self.pawns[self.turn as usize]
+        self.pawns[self.turn.other() as usize]
     }
 
     pub fn remaining_walls(&self) -> [u8; 2] {
@@ -174,22 +174,13 @@ impl Board {
     }
 
     pub fn winner(&self) -> Option<Player> {
-        match self.turn.other() {
-            White => {
-                if self.pawns[White as usize] < 9 {
-                    Some(White)
-                } else {
-                    None
-                }
-            }
-            Black => {
-                if self.pawns[Black as usize] > 71 {
-                    Some(Black)
-                } else {
-                    None
-                }
-            }
+        if self.pawns[White as usize] < 9 {
+            return Some(White);
         }
+        if self.pawns[Black as usize] > 71 {
+            return Some(Black);
+        }
+        None
     }
 
     pub fn is_open(&self, sqnum: u8, direction: &Direction) -> bool {
