@@ -4,6 +4,7 @@ use std::rc::Rc;
 
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
+use std::time::SystemTime;
 
 use crate::board::Board;
 use crate::board::Player;
@@ -152,10 +153,12 @@ pub fn mcts(board: &Board, log: &mut String) -> Board {
     log.push_str("mcts-solver search\n");
     log.push_str(&format!("iterations:\t{}\n", ITERATIONS));
 
+    let start_time = SystemTime::now();
     let root = Rc::new(RefCell::new(Node::new(board.clone())));
     for _ in 0..ITERATIONS {
         solver(&root);
     }
+    let end_time = SystemTime::now();
 
     let mut best_score = -INFINITY;
     let mut best_child = root.borrow().children[0].clone();
@@ -166,18 +169,28 @@ pub fn mcts(board: &Board, log: &mut String) -> Board {
         }
     }
 
+    let think_time = end_time.duration_since(start_time);
+    if think_time.is_ok() {
+        let millis = think_time.unwrap().as_millis();
+        log.push_str(&format!("time:\t\t{} ms\n", millis));
+        log.push_str(&format!(
+            "iter/s:\t\t{:.3}\n",
+            ITERATIONS as f64 / (millis as f64 / 1000.0)
+        ));
+    }
+
     log.push_str(&format!("moves:\t\t{}\n", root.borrow().children.len()));
     log.push_str(&format!("visits:\t\t{}\n", best_child.borrow().visits));
     log.push_str(&format!(
-        "visit %:\t{}%\n",
+        "visit %:\t{:.3}%\n",
         100.0 * best_child.borrow().visits as f64 / ITERATIONS as f64
     ));
     log.push_str(&format!(
-        "focus:\t\t{}\n",
+        "focus:\t\t{:.3}\n",
         (best_child.borrow().visits as f64)
             / (ITERATIONS as f64 / root.borrow().children.len() as f64)
     ));
-    log.push_str(&format!("value:\t\t{}\n", -best_child.borrow().value));
+    log.push_str(&format!("value:\t\t{:.3}\n", -best_child.borrow().value));
 
     let board = best_child.borrow().board.clone();
     board
