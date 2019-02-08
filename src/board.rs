@@ -212,7 +212,12 @@ impl Board {
         }
     }
 
-    pub fn moves_detailed(&self, moves_only: bool, validate_paths: bool, return_wins: bool) -> Vec<Board> {
+    pub fn moves_detailed(
+        &self,
+        moves_only: bool,
+        validate_paths: bool,
+        return_wins: bool,
+    ) -> Vec<Board> {
         let turn = self.turn as usize;
         let other = self.turn.other() as usize;
         let pawn = self.pawns[turn];
