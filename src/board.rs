@@ -183,6 +183,23 @@ impl Board {
         None
     }
 
+    pub fn can_win(&self) -> bool {
+	let winning_row = match self.turn {
+	    White => self.turn_pawn() < 18,
+	    Black => self.turn_pawn() > 62
+	};
+	if !winning_row {
+	    return false;
+	}
+
+	for child in self.moves_detailed(true, false, true) {
+	    if child.winner().is_some() {
+		return true;
+	    }
+	}
+	return false;
+    }
+
     pub fn is_open(&self, sqnum: u8, direction: &Direction) -> bool {
         let se_wall = (sqnum / 9) * 8 + (sqnum % 9);
         let sw_wall = if se_wall > 0 { se_wall - 1 } else { 0 };
