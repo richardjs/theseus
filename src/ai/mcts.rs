@@ -62,7 +62,7 @@ fn simulate(mut board: Board) -> Player {
 
         // bias towards walking along shortest path
         if rng.gen_bool(PATH_MOVE_SIM_PROBABILTY) {
-            for child in board.moves_detailed(false, false, true) {
+            for child in board.moves_detailed(true, false, true) {
                 if child.other_pawn() == *board.shortest_path(board.turn()).first().unwrap()
                     && child.paths_exist()
                 {
