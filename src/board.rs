@@ -484,10 +484,13 @@ impl Board {
 
     pub fn to_string(&self) -> String {
         let mut s = String::new();
-	s.push_str(&format!("{} to move\n", match self.turn() {
-	    White => "white",
-	    Black => "black",
-	}));
+        s.push_str(&format!(
+            "{} to move\n",
+            match self.turn() {
+                White => "white",
+                Black => "black",
+            }
+        ));
         s.push_str("  a   b   c   d   e   f   g   h   i\n");
         for row in 0..9 {
             s.push_str(&format!("{} ", row + 1));
