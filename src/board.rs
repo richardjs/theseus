@@ -184,11 +184,11 @@ impl Board {
     }
 
     pub fn can_win(&self) -> bool {
-	let winning_row = match self.turn {
-	    White => self.turn_pawn() < 18,
-	    Black => self.turn_pawn() > 62
+	let possible_win_row = match self.turn {
+	    White => self.turn_pawn() < 18 || (self.turn_pawn() < 26 && self.other_pawn() + 9 == self.turn_pawn()),
+	    Black => self.turn_pawn() > 62 || (self.turn_pawn() > 53 && self.other_pawn() == self.turn_pawn() + 9),
 	};
-	if !winning_row {
+	if !possible_win_row {
 	    return false;
 	}
 
