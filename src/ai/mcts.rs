@@ -48,7 +48,7 @@ impl Node {
 fn simulate(mut board: Board) -> Player {
     let mut rng = thread_rng();
 
-    'turn: while board.winner().is_none() {
+    'turn: while !board.can_win() {
         // early termination with no walls remaining
         if board.remaining_walls()[0] == 0 && board.remaining_walls()[1] == 0 {
             if board.shortest_path(board.turn()).len()
@@ -64,7 +64,7 @@ fn simulate(mut board: Board) -> Player {
         if rng.gen_bool(PATH_MOVE_SIM_PROBABILTY) {
             for child in board.moves_detailed(true, false, true) {
                 if child.other_pawn() == *board.shortest_path(board.turn()).first().unwrap()
-                    && child.paths_exist()
+                    && !child.can_win()
                 {
                     board = child.clone();
                     continue 'turn;
@@ -74,13 +74,18 @@ fn simulate(mut board: Board) -> Player {
 
         let moves = board.moves_detailed(false, false, true);
         let mut next = moves.choose(&mut rng).unwrap();
-        while !next.paths_exist() {
+        let mut tries = 0;
+        while !next.paths_exist() || next.can_win() {
             next = moves.choose(&mut rng).unwrap();
+            tries += 1;
+            if tries > moves.len() * 3 && next.paths_exist() {
+                break;
+            }
         }
         board = next.clone();
     }
 
-    return board.winner().unwrap();
+    return board.turn();
 }
 
 fn solver(node: &Rc<RefCell<Node>>) -> f64 {
