@@ -71,7 +71,7 @@ pub fn minimax(board: &Board, log: &mut String) -> Board {
     log.push_str("minimax search\n");
     log.push_str(&format!("depth:\t{}\n", DEPTH));
 
-    let moves = board.moves_detailed(true, true);
+    let moves = board.moves_detailed(false, true, true);
     if moves.len() == 1 {
         return moves[0].clone();
     }

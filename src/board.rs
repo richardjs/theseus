@@ -212,7 +212,7 @@ impl Board {
         }
     }
 
-    pub fn moves_detailed(&self, validate_paths: bool, return_wins: bool) -> Vec<Board> {
+    pub fn moves_detailed(&self, moves_only: bool, validate_paths: bool, return_wins: bool) -> Vec<Board> {
         let turn = self.turn as usize;
         let other = self.turn.other() as usize;
         let pawn = self.pawns[turn];
@@ -275,7 +275,7 @@ impl Board {
 
         // wall placements
         // we're going to start with a fairly naive algorithm, and optimize later
-        if self.remaining_walls[turn] == 0 {
+        if moves_only || self.remaining_walls[turn] == 0 {
             return moves;
         }
         for i in 0..64 {
@@ -315,7 +315,7 @@ impl Board {
     }
 
     pub fn moves(&self) -> Vec<Board> {
-        self.moves_detailed(true, false)
+        self.moves_detailed(false, true, false)
     }
 
     pub fn paths_exist(&self) -> bool {
