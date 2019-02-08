@@ -184,20 +184,26 @@ impl Board {
     }
 
     pub fn can_win(&self) -> bool {
-	let possible_win_row = match self.turn {
-	    White => self.turn_pawn() < 18 || (self.turn_pawn() < 26 && self.other_pawn() + 9 == self.turn_pawn()),
-	    Black => self.turn_pawn() > 62 || (self.turn_pawn() > 53 && self.other_pawn() == self.turn_pawn() + 9),
-	};
-	if !possible_win_row {
-	    return false;
-	}
+        let possible_win_row = match self.turn {
+            White => {
+                self.turn_pawn() < 18
+                    || (self.turn_pawn() < 26 && self.other_pawn() + 9 == self.turn_pawn())
+            }
+            Black => {
+                self.turn_pawn() > 62
+                    || (self.turn_pawn() > 53 && self.other_pawn() == self.turn_pawn() + 9)
+            }
+        };
+        if !possible_win_row {
+            return false;
+        }
 
-	for child in self.moves_detailed(true, false, true) {
-	    if child.winner().is_some() {
-		return true;
-	    }
-	}
-	return false;
+        for child in self.moves_detailed(true, false, true) {
+            if child.winner().is_some() {
+                return true;
+            }
+        }
+        return false;
     }
 
     pub fn is_open(&self, sqnum: u8, direction: &Direction) -> bool {
