@@ -73,6 +73,11 @@ fn simulate(mut board: Board) -> Player {
         }
 
         let moves = board.moves_detailed(false, false, true);
+        if moves.len() == 1 {
+            board = moves[0].clone();
+            continue;
+        }
+
         let mut next = moves.choose(&mut rng).unwrap();
         let mut tries = 0;
         while !next.paths_exist() || next.can_win() {
