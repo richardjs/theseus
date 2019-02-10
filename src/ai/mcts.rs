@@ -10,9 +10,9 @@ use crate::board::Board;
 use crate::board::Player;
 
 const ITERATIONS: u32 = 20000;
-const UCTC: f64 = 1000.0;
-const UCTW: f64 = 1000.0;
-const MOVE_PROBABILITY: f64 = 0.9;
+const UCTC: f64 = 1.0;
+const UCTW: f64 = 0.0;
+const MOVE_PROBABILITY: f64 = 0.8;
 const SIM_THRESHOLD: u32 = 5;
 const PATH_MOVE_SIM_PROBABILTY: f64 = 0.95;
 
