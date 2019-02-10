@@ -1,3 +1,4 @@
+use rocket::config::{Config, Environment};
 use rocket::fairing::{Fairing, Info, Kind};
 use rocket::{Request, Response};
 
@@ -53,8 +54,11 @@ fn index(id: u64, tqbn: String) -> String {
     ))
 }
 
-pub fn api() {
-    rocket::ignite()
+pub fn api(port: u16) {
+    let config = Config::build(Environment::active().unwrap())
+        .port(port)
+        .unwrap();
+    rocket::custom(config)
         .attach(AllowOrigin::new(String::from("*")))
         .mount("/theseus", routes![index])
         .launch();

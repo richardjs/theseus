@@ -18,13 +18,13 @@ pub fn cli() {
         .subcommand(
             SubCommand::with_name("api")
                 .about("Runs HTTP API server")
-//                .arg(
-//                    Arg::with_name("port")
-//                        .short("p")
-//                        .long("port")
-//                        .help("Listen on this port")
-//                        .takes_value(true),
-//                ),
+                .arg(
+                    Arg::with_name("port")
+                        .short("p")
+                        .long("port")
+                        .help("Listen on this port")
+                        .takes_value(true),
+                ),
         );
 
     let app_m = app.clone().get_matches();
@@ -44,8 +44,9 @@ pub fn cli() {
 
             println!("{}", move_string);
         }
-        ("api", Some(_sub_m)) => {
-            crate::api();
+        ("api", Some(sub_m)) => {
+            let port: u16 = sub_m.value_of("port").unwrap_or("8000").parse().unwrap();
+            crate::api(port);
         }
         _ => {
             app.print_help().unwrap();
