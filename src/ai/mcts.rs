@@ -16,7 +16,7 @@ const UCTC: f64 = 1.0;
 const UCTW: f64 = 0.0;
 const MOVE_PROBABILITY: f64 = 0.8;
 const SIM_THRESHOLD: u32 = 5;
-const PATH_MOVE_SIM_PROBABILTY: f64 = 0.95;
+const PATH_MOVE_SIM_PROBABILTY: f64 = 0.80;
 
 const THREADS: u32 = 2;
 
@@ -82,15 +82,24 @@ fn simulate(mut board: Board) -> Player {
             continue;
         }
 
-        let mut next = moves.choose(&mut rng).unwrap();
-        let mut tries = 0;
-        while !next.paths_exist() || next.can_win() {
-            next = moves.choose(&mut rng).unwrap();
-            tries += 1;
-            if tries > moves.len() * 3 && next.paths_exist() {
+        let mut choices: Vec<_> = (0..moves.len()).collect();
+        let mut next;
+        loop {
+            let choice = *choices.choose(&mut rng).unwrap();
+            next = &moves[choice];
+
+            let index = choices.iter().position(|x| *x == choice).unwrap();
+            choices.remove(index);
+
+            if choices.len() == 0 || (next.paths_exist() && !next.can_win()) {
                 break;
-            }
+            };
         }
+
+	while !next.paths_exist(){
+	    next = moves.choose(&mut rng).unwrap();
+	}
+
         board = next.clone();
     }
 
@@ -167,7 +176,7 @@ pub fn mcts(board: &Board, log: &mut String) -> Board {
     log.push_str("mcts-solver search\n");
     log.push_str(&format!("iterations:\t{}\n", ITERATIONS));
     log.push_str(&format!("threads:\t{}\n", THREADS));
-    log.push_str(&format!("total:\t\t{}\n\n", ITERATIONS*THREADS));
+    log.push_str(&format!("total:\t\t{}\n\n", ITERATIONS * THREADS));
 
     let (tx, rx) = mpsc::channel();
 
@@ -217,21 +226,24 @@ pub fn mcts(board: &Board, log: &mut String) -> Board {
         log.push_str(&format!("time:\t\t{} ms\n", millis));
         log.push_str(&format!(
             "iter/s:\t\t{:.3}\n",
-            (ITERATIONS*THREADS) as f64 / (millis as f64 / 1000.0)
+            (ITERATIONS * THREADS) as f64 / (millis as f64 / 1000.0)
         ));
     }
     log.push_str(&format!("moves:\t\t{}\n\n", root.borrow().children.len()));
 
-    log.push_str(&format!("value:\t\t{:.3}\n", -best_child.borrow().value/(THREADS as f64)));
+    log.push_str(&format!(
+        "value:\t\t{:.3}\n",
+        -best_child.borrow().value / (THREADS as f64)
+    ));
     log.push_str(&format!("visits:\t\t{}\n", best_child.borrow().visits));
     log.push_str(&format!(
         "focus:\t\t{:.3}\n",
         (best_child.borrow().visits as f64)
-            / ((ITERATIONS*THREADS) as f64 / root.borrow().children.len() as f64)
+            / ((ITERATIONS * THREADS) as f64 / root.borrow().children.len() as f64)
     ));
     log.push_str(&format!(
         "visit %:\t{:.3}%\n\n",
-        100.0 * best_child.borrow().visits as f64 / (ITERATIONS*THREADS) as f64
+        100.0 * best_child.borrow().visits as f64 / (ITERATIONS * THREADS) as f64
     ));
 
     let board = best_child.borrow().board.clone();
