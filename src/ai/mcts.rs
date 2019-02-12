@@ -4,6 +4,8 @@ use std::rc::Rc;
 
 use rand::seq::SliceRandom;
 use rand::{thread_rng, Rng};
+use std::sync::mpsc;
+use std::thread;
 use std::time::SystemTime;
 
 use crate::board::Board;
@@ -15,6 +17,8 @@ const UCTW: f64 = 0.0;
 const MOVE_PROBABILITY: f64 = 0.8;
 const SIM_THRESHOLD: u32 = 5;
 const PATH_MOVE_SIM_PROBABILTY: f64 = 0.95;
+
+const THREADS: u32 = 2;
 
 struct Node {
     board: Board,
@@ -162,12 +166,40 @@ fn solver(node: &Rc<RefCell<Node>>) -> f64 {
 pub fn mcts(board: &Board, log: &mut String) -> Board {
     log.push_str("mcts-solver search\n");
     log.push_str(&format!("iterations:\t{}\n", ITERATIONS));
+    log.push_str(&format!("threads:\t{}\n", THREADS));
+    log.push_str(&format!("total:\t\t{}\n\n", ITERATIONS*THREADS));
+
+    let (tx, rx) = mpsc::channel();
 
     let start_time = SystemTime::now();
-    let root = Rc::new(RefCell::new(Node::new(board.clone())));
-    for _ in 0..ITERATIONS {
-        solver(&root);
+
+    for _ in 0..THREADS {
+        let board = board.clone();
+        let tx = tx.clone();
+        thread::spawn(move || {
+            let root = Rc::new(RefCell::new(Node::new(board.clone())));
+            for _ in 0..(ITERATIONS) {
+                solver(&root);
+            }
+
+            let mut results = Vec::new();
+            for child in &root.borrow().children {
+                results.push((child.borrow().value, child.borrow().visits));
+            }
+            tx.send(results).unwrap();
+        });
     }
+    drop(tx);
+
+    let root = Rc::new(RefCell::new(Node::new(board.clone())));
+    root.borrow_mut().expand();
+    for data in rx {
+        for (i, (value, visits)) in data.iter().enumerate() {
+            root.borrow_mut().children[i].borrow_mut().value += value;
+            root.borrow_mut().children[i].borrow_mut().visits += visits;
+        }
+    }
+
     let end_time = SystemTime::now();
 
     let mut best_score = -INFINITY;
@@ -185,22 +217,22 @@ pub fn mcts(board: &Board, log: &mut String) -> Board {
         log.push_str(&format!("time:\t\t{} ms\n", millis));
         log.push_str(&format!(
             "iter/s:\t\t{:.3}\n",
-            ITERATIONS as f64 / (millis as f64 / 1000.0)
+            (ITERATIONS*THREADS) as f64 / (millis as f64 / 1000.0)
         ));
     }
+    log.push_str(&format!("moves:\t\t{}\n\n", root.borrow().children.len()));
 
-    log.push_str(&format!("moves:\t\t{}\n", root.borrow().children.len()));
+    log.push_str(&format!("value:\t\t{:.3}\n", -best_child.borrow().value/(THREADS as f64)));
     log.push_str(&format!("visits:\t\t{}\n", best_child.borrow().visits));
-    log.push_str(&format!(
-        "visit %:\t{:.3}%\n",
-        100.0 * best_child.borrow().visits as f64 / ITERATIONS as f64
-    ));
     log.push_str(&format!(
         "focus:\t\t{:.3}\n",
         (best_child.borrow().visits as f64)
-            / (ITERATIONS as f64 / root.borrow().children.len() as f64)
+            / ((ITERATIONS*THREADS) as f64 / root.borrow().children.len() as f64)
     ));
-    log.push_str(&format!("value:\t\t{:.3}\n", -best_child.borrow().value));
+    log.push_str(&format!(
+        "visit %:\t{:.3}%\n\n",
+        100.0 * best_child.borrow().visits as f64 / (ITERATIONS*THREADS) as f64
+    ));
 
     let board = best_child.borrow().board.clone();
     board
