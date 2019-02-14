@@ -69,7 +69,7 @@ fn simulate(mut board: Board) -> Player {
         if rng.gen_bool(PATH_MOVE_SIM_PROBABILTY) {
             for child in board.moves_detailed(true, false, true) {
                 if child.other_pawn() == *board.shortest_path(board.turn()).first().unwrap()
-                    && !child.can_win()
+                    //&& !child.can_win()
                 {
                     board = child.clone();
                     continue 'turn;
@@ -92,7 +92,7 @@ fn simulate(mut board: Board) -> Player {
             let index = choices.iter().position(|x| *x == choice).unwrap();
             choices.remove(index);
 
-            if choices.len() == 0 || (next.paths_exist() && !next.can_win()) {
+            if choices.len() == 0 || next.paths_exist() { //&& !next.can_win()) {
                 break;
             };
         }
