@@ -347,6 +347,10 @@ impl Board {
     }
 
     pub fn paths_exist(&self) -> bool {
+	if self.shortest_path_cache[0].is_some() && self.shortest_path_cache[1].is_some() {
+	    return true;
+	}
+
         let mut white_path = false;
         let mut queue = vec![self.pawns[White as usize]];
         let mut crumbs = [false; 81];
