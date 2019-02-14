@@ -232,10 +232,21 @@ pub fn mcts(board: &Board, log: &mut String) -> Board {
 
     let mut best_score = -INFINITY;
     let mut best_child = root.borrow().children[0].clone();
+    let mut walking_shortest_path = false;
     for child in &root.borrow().children {
         if -child.borrow().value > best_score {
             best_score = -child.borrow().value;
             best_child = child.clone();
+            walking_shortest_path = false;
+        } else if -child.borrow().value == best_score {
+            // prioritizing walking shortest path
+            let mut board = board.clone();
+            if child.borrow().board.other_pawn()
+                == *board.shortest_path(board.turn()).first().unwrap()
+            {
+                best_child = child.clone();
+                walking_shortest_path = true;
+            }
         }
     }
 
@@ -257,6 +268,9 @@ pub fn mcts(board: &Board, log: &mut String) -> Board {
     }
     log.push_str(&format!("moves:\t\t{}\n\n", root.borrow().children.len()));
 
+    if walking_shortest_path {
+        log.push_str(&format!("walking shortest path\n"));
+    }
     log.push_str(&format!(
         "value:\t\t{:.3}\n",
         -best_child.borrow().value / (THREADS as f64)
