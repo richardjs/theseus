@@ -11,13 +11,13 @@ use std::time::SystemTime;
 use crate::board::Board;
 use crate::board::Player;
 
-const SEARCH_TIME: u128 = 5;
+const SEARCH_TIME: u128 = 8;
 //const ITERATIONS: u32 = 20000;
 const UCTC: f64 = 1.0;
 const UCTW: f64 = 0.0;
 const MOVE_PROBABILITY: f64 = 0.8;
 const SIM_THRESHOLD: u32 = 5;
-const PATH_MOVE_SIM_PROBABILTY: f64 = 0.80;
+const PATH_MOVE_SIM_PROBABILTY: f64 = 0.90;
 
 const THREADS: u32 = 2;
 
