@@ -77,7 +77,7 @@ fn simulate(mut board: Board) -> Player {
             }
         }
 
-        let moves = board.moves_detailed(false, false, false, true);
+        let moves = board.moves_detailed(false, false, true, true);
         if moves.len() == 1 {
             board = moves[0].clone();
             continue;
