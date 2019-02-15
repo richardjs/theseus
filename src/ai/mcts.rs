@@ -175,6 +175,10 @@ fn solver(node: &Rc<RefCell<Node>>) -> f64 {
 }
 
 pub fn mcts(board: &Board, log: &mut String) -> Board {
+    log.push_str(&format!("theseus {}\n", env!("CARGO_PKG_VERSION")));
+    log.push_str(&format!("commit\t{}\n", env!("HEAD_SHA")));
+    log.push_str(&format!("patch\t{}\n\n", env!("PATCH_SHA")));
+
     log.push_str("mcts-solver search\n");
     log.push_str(&format!("search time:\t{}s\n", SEARCH_TIME));
     log.push_str(&format!("threads:\t{}\n\n", THREADS));
