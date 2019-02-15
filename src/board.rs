@@ -198,7 +198,7 @@ impl Board {
             return false;
         }
 
-        for child in self.moves_detailed(true, false, true) {
+        for child in self.moves_detailed(true, false, false, true) {
             if child.winner().is_some() {
                 return true;
             }
@@ -239,6 +239,7 @@ impl Board {
         &self,
         moves_only: bool,
         validate_paths: bool,
+        limit_walls: bool,
         return_wins: bool,
     ) -> Vec<Board> {
         let turn = self.turn as usize;
@@ -311,6 +312,21 @@ impl Board {
             if (self.hwalls & wall_bit) > 0 || (self.vwalls & wall_bit) > 0 {
                 continue;
             }
+
+            let walls = self.hwalls | self.vwalls;
+            if limit_walls
+                && ((wall_bit << 1) & walls) == 0
+                && ((wall_bit >> 1) & walls) == 0
+                && ((wall_bit << 2) & walls) == 0
+                && ((wall_bit >> 2) & walls) == 0
+                && ((wall_bit << 8) & walls) == 0
+                && ((wall_bit >> 8) & walls) == 0
+                && ((wall_bit << 16) & walls) == 0
+                && ((wall_bit >> 16) & walls) == 0
+            {
+                continue;
+            }
+
             if (i == 0 || ((wall_bit >> 1) & self.hwalls) == 0)
                 && (i == 63 || ((wall_bit << 1) & self.hwalls == 0))
             {
@@ -343,13 +359,13 @@ impl Board {
     }
 
     pub fn moves(&self) -> Vec<Board> {
-        self.moves_detailed(false, true, false)
+        self.moves_detailed(false, true, false, false)
     }
 
     pub fn paths_exist(&self) -> bool {
-	if self.shortest_path_cache[0].is_some() && self.shortest_path_cache[1].is_some() {
-	    return true;
-	}
+        if self.shortest_path_cache[0].is_some() && self.shortest_path_cache[1].is_some() {
+            return true;
+        }
 
         let mut white_path = false;
         let mut queue = vec![self.pawns[White as usize]];
@@ -778,5 +794,13 @@ mod tests {
         board = board.moves()[50].clone();
         assert_eq!(board.shortest_path_cache[0], None);
         assert_eq!(board.shortest_path_cache[1], None);
+    }
+
+    #[test]
+    fn basic_limit_walls() {
+        let mut board = Board::new();
+        assert_eq!(board.moves_detailed(false, true, true, false).len(), 3);
+        board.hwalls = 1 << 36;
+        assert_eq!(board.moves_detailed(false, true, true, false).len(), 17);
     }
 }

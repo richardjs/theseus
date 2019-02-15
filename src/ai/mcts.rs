@@ -39,7 +39,7 @@ impl Node {
     }
 
     fn expand(&mut self) {
-        for child in self.board.moves_detailed(false, true, true) {
+        for child in self.board.moves_detailed(false, true, false, true) {
             self.children.push(Rc::new(RefCell::new(Node::new(child))));
         }
     }
@@ -67,9 +67,9 @@ fn simulate(mut board: Board) -> Player {
 
         // bias towards walking along shortest path
         if rng.gen_bool(PATH_MOVE_SIM_PROBABILTY) {
-            for child in board.moves_detailed(true, false, true) {
+            for child in board.moves_detailed(true, false, false, true) {
                 if child.other_pawn() == *board.shortest_path(board.turn()).first().unwrap()
-                    //&& !child.can_win()
+                //&& !child.can_win()
                 {
                     board = child.clone();
                     continue 'turn;
@@ -77,7 +77,7 @@ fn simulate(mut board: Board) -> Player {
             }
         }
 
-        let moves = board.moves_detailed(false, false, true);
+        let moves = board.moves_detailed(false, false, false, true);
         if moves.len() == 1 {
             board = moves[0].clone();
             continue;
@@ -92,7 +92,8 @@ fn simulate(mut board: Board) -> Player {
             let index = choices.iter().position(|x| *x == choice).unwrap();
             choices.remove(index);
 
-            if choices.len() == 0 || next.paths_exist() { //&& !next.can_win()) {
+            if choices.len() == 0 || next.paths_exist() {
+                //&& !next.can_win()) {
                 break;
             };
         }
