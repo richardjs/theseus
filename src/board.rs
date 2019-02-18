@@ -273,6 +273,8 @@ impl Board {
 
             // jumping
             if child.pawns[turn] == child.pawns[other] {
+                child.shortest_path_cache.borrow_mut()[turn] = None;
+
                 if self.is_open(child.pawns[turn], direction) {
                     child.pawns[turn] = direction.move_sqnum(child.pawns[turn]);
                     if return_wins && child.winner().is_some() {
@@ -337,8 +339,44 @@ impl Board {
                 child.hwalls |= wall_bit;
                 child.remaining_walls[turn] -= 1;
                 child.turn = child.turn.other();
-                child.shortest_path_cache.borrow_mut()[White as usize] = None;
-                child.shortest_path_cache.borrow_mut()[Black as usize] = None;
+
+                for player in [White, Black].iter() {
+                    let mut invalidate_cache = false;
+                    if let Some(cache) = &child.shortest_path_cache.borrow()[*player as usize] {
+                        if child.pawns[*player as usize] + 9 == cache[0] {
+                            if !child.is_open(child.pawns[*player as usize], &South) {
+                                invalidate_cache = true;
+                            }
+                        }
+                        if !invalidate_cache && cache[0] + 9 == child.pawns[*player as usize] {
+                            if !child.is_open(child.pawns[*player as usize], &North) {
+                                invalidate_cache = true;
+                            }
+                        }
+                        if !invalidate_cache {
+                            for j in 0..cache.len() - 1 {
+                                let x = cache[j];
+                                let y = cache[j + 1];
+                                if x + 9 == y {
+                                    if !child.is_open(x, &South) {
+                                        invalidate_cache = true;
+                                        break;
+                                    }
+                                }
+                                if y + 9 == x {
+                                    if !child.is_open(x, &North) {
+                                        invalidate_cache = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if invalidate_cache {
+                        child.shortest_path_cache.borrow_mut()[*player as usize] = None;
+                    }
+                }
+
                 if !validate_paths || child.paths_exist() {
                     moves.push(child);
                 }
@@ -350,8 +388,44 @@ impl Board {
                 child.vwalls |= wall_bit;
                 child.remaining_walls[turn] -= 1;
                 child.turn = child.turn.other();
-                child.shortest_path_cache.borrow_mut()[White as usize] = None;
-                child.shortest_path_cache.borrow_mut()[Black as usize] = None;
+
+                for player in [White, Black].iter() {
+                    let mut invalidate_cache = false;
+                    if let Some(cache) = &child.shortest_path_cache.borrow()[*player as usize] {
+                        if child.pawns[*player as usize] + 1 == cache[0] {
+                            if !child.is_open(child.pawns[*player as usize], &East) {
+                                invalidate_cache = true;
+                            }
+                        }
+                        if !invalidate_cache && cache[0] + 1 == child.pawns[*player as usize] {
+                            if !child.is_open(child.pawns[*player as usize], &West) {
+                                invalidate_cache = true;
+                            }
+                        }
+                        if !invalidate_cache {
+                            for j in 0..cache.len() - 1 {
+                                let x = cache[j];
+                                let y = cache[j + 1];
+                                if x + 1 == y {
+                                    if !child.is_open(x, &East) {
+                                        invalidate_cache = true;
+                                        break;
+                                    }
+                                }
+                                if y + 1 == x {
+                                    if !child.is_open(x, &West) {
+                                        invalidate_cache = true;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if invalidate_cache {
+                        child.shortest_path_cache.borrow_mut()[*player as usize] = None;
+                    }
+                }
+
                 if !validate_paths || child.paths_exist() {
                     moves.push(child);
                 }
