@@ -245,7 +245,7 @@ pub fn mcts(board: &Board, log: &mut String) -> Board {
             walking_shortest_path = false;
         } else if -child.borrow().value == best_score {
             // prioritizing walking shortest path
-            let mut board = board.clone();
+            let board = board.clone();
             if child.borrow().board.other_pawn()
                 == *board.shortest_path(board.turn()).first().unwrap()
             {

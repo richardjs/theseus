@@ -1,3 +1,5 @@
+use std::cell::RefCell;
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Player {
     White = 0,
@@ -93,7 +95,7 @@ pub struct Board {
     /// next player to move
     turn: Player,
 
-    shortest_path_cache: [Option<Vec<u8>>; 2],
+    shortest_path_cache: RefCell<[Option<Vec<u8>>; 2]>,
 }
 
 impl Board {
@@ -104,7 +106,7 @@ impl Board {
             hwalls: 0,
             vwalls: 0,
             turn: White,
-            shortest_path_cache: [None, None],
+            shortest_path_cache: RefCell::new([None, None]),
         }
     }
 
@@ -149,7 +151,7 @@ impl Board {
                 '2' => Black,
                 _ => panic!(),
             },
-            shortest_path_cache: [None, None],
+            shortest_path_cache: RefCell::new([None, None]),
         }
     }
 
@@ -259,12 +261,13 @@ impl Board {
             child.turn = child.turn.other();
 
             let child_pawn = child.pawns[turn];
-            if let Some(cache) = &mut child.shortest_path_cache[turn] {
+            if let Some(cache) = &self.shortest_path_cache.borrow_mut()[turn] {
                 if *cache.first().unwrap() == child_pawn {
-                    cache.remove(0);
-                    child.shortest_path_cache[turn] = Some(cache.to_vec());
+                    let mut child_cache = cache.clone();
+                    child_cache.remove(0);
+                    child.shortest_path_cache.borrow_mut()[turn] = Some(child_cache);
                 } else {
-                    child.shortest_path_cache[turn] = None;
+                    child.shortest_path_cache.borrow_mut()[turn] = None;
                 }
             }
 
@@ -334,8 +337,8 @@ impl Board {
                 child.hwalls |= wall_bit;
                 child.remaining_walls[turn] -= 1;
                 child.turn = child.turn.other();
-                child.shortest_path_cache[White as usize] = None;
-                child.shortest_path_cache[Black as usize] = None;
+                child.shortest_path_cache.borrow_mut()[White as usize] = None;
+                child.shortest_path_cache.borrow_mut()[Black as usize] = None;
                 if !validate_paths || child.paths_exist() {
                     moves.push(child);
                 }
@@ -347,8 +350,8 @@ impl Board {
                 child.vwalls |= wall_bit;
                 child.remaining_walls[turn] -= 1;
                 child.turn = child.turn.other();
-                child.shortest_path_cache[White as usize] = None;
-                child.shortest_path_cache[Black as usize] = None;
+                child.shortest_path_cache.borrow_mut()[White as usize] = None;
+                child.shortest_path_cache.borrow_mut()[Black as usize] = None;
                 if !validate_paths || child.paths_exist() {
                     moves.push(child);
                 }
@@ -363,64 +366,18 @@ impl Board {
     }
 
     pub fn paths_exist(&self) -> bool {
-        if self.shortest_path_cache[0].is_some() && self.shortest_path_cache[1].is_some() {
+        if self.shortest_path_cache.borrow()[0].is_some()
+            && self.shortest_path_cache.borrow()[1].is_some()
+        {
             return true;
         }
 
-        let mut white_path = false;
-        let mut queue = vec![self.pawns[White as usize]];
-        let mut crumbs = [false; 81];
-        crumbs[queue[0] as usize] = true;
-        while queue.len() > 0 && !white_path {
-            let sqnum = queue.pop().unwrap();
-
-            for direction in [North, South, East, West].iter() {
-                if !self.is_open(sqnum, direction) {
-                    continue;
-                }
-                let move_sqnum = direction.move_sqnum(sqnum);
-                if move_sqnum < 9 {
-                    white_path = true;
-                    break;
-                }
-                if crumbs[move_sqnum as usize] {
-                    continue;
-                }
-                queue.insert(0, move_sqnum);
-                crumbs[move_sqnum as usize] = true;
-            }
-        }
-
-        let mut black_path = false;
-        let mut queue = vec![self.pawns[Black as usize]];
-        let mut crumbs = [false; 81];
-        crumbs[queue[0] as usize] = true;
-        while queue.len() > 0 && !black_path {
-            let sqnum = queue.pop().unwrap();
-
-            for direction in [North, South, East, West].iter() {
-                if !self.is_open(sqnum, direction) {
-                    continue;
-                }
-                let move_sqnum = direction.move_sqnum(sqnum);
-                if move_sqnum > 71 {
-                    black_path = true;
-                    break;
-                }
-                if crumbs[move_sqnum as usize] {
-                    continue;
-                }
-                queue.insert(0, move_sqnum);
-                crumbs[move_sqnum as usize] = true;
-            }
-        }
-
-        white_path && black_path
+        return self.shortest_path(White).len() > 0 && self.shortest_path(Black).len() > 0;
     }
 
-    pub fn shortest_path(&mut self, player: Player) -> Vec<u8> {
+    pub fn shortest_path(&self, player: Player) -> Vec<u8> {
         // TODO test shortest path cache, and optimize it (for example, wall placement doesn't invalidate it if it doesn't intersect with it)
-        if let Some(cache) = self.shortest_path_cache[player as usize].clone() {
+        if let Some(cache) = self.shortest_path_cache.borrow()[player as usize].clone() {
             return cache;
         }
 
@@ -441,7 +398,7 @@ impl Board {
                         let mut path = path.clone();
                         path.push(move_sqnum);
                         path.remove(0);
-                        self.shortest_path_cache[player as usize] = Some(path.clone());
+                        self.shortest_path_cache.borrow_mut()[player as usize] = Some(path.clone());
                         return path;
                     }
                 } else {
@@ -449,7 +406,7 @@ impl Board {
                         let mut path = path.clone();
                         path.push(move_sqnum);
                         path.remove(0);
-                        self.shortest_path_cache[player as usize] = Some(path.clone());
+                        self.shortest_path_cache.borrow_mut()[player as usize] = Some(path.clone());
                         return path;
                     }
                 }
@@ -774,26 +731,23 @@ mod tests {
     #[test]
     fn basic_shortest_path_cache_usage() {
         let mut board = Board::new();
-        assert_eq!(board.shortest_path_cache[0], None);
-        assert_eq!(board.shortest_path_cache[1], None);
+        assert_eq!(board.shortest_path_cache.borrow()[0], None);
+        assert_eq!(board.shortest_path_cache.borrow()[1], None);
         board.shortest_path(White);
-        assert_ne!(board.shortest_path_cache[0], None);
-        assert_eq!(board.shortest_path_cache[1], None);
+        assert_ne!(board.shortest_path_cache.borrow()[0], None);
+        assert_eq!(board.shortest_path_cache.borrow()[1], None);
         board.shortest_path(Black);
-        assert_ne!(board.shortest_path_cache[0], None);
-        assert_ne!(board.shortest_path_cache[1], None);
+        assert_ne!(board.shortest_path_cache.borrow()[0], None);
+        assert_ne!(board.shortest_path_cache.borrow()[1], None);
         board = board.moves()[0].clone();
-        assert_ne!(board.shortest_path_cache[0], None);
-        assert_ne!(board.shortest_path_cache[1], None);
+        assert_ne!(board.shortest_path_cache.borrow()[0], None);
+        assert_ne!(board.shortest_path_cache.borrow()[1], None);
         board = board.moves()[0].clone();
-        assert_ne!(board.shortest_path_cache[0], None);
-        assert_ne!(board.shortest_path_cache[1], None);
+        assert_ne!(board.shortest_path_cache.borrow()[0], None);
+        assert_ne!(board.shortest_path_cache.borrow()[1], None);
         board = board.moves()[2].clone();
-        assert_eq!(board.shortest_path_cache[0], None);
-        assert_ne!(board.shortest_path_cache[1], None);
-        board = board.moves()[50].clone();
-        assert_eq!(board.shortest_path_cache[0], None);
-        assert_eq!(board.shortest_path_cache[1], None);
+        assert_eq!(board.shortest_path_cache.borrow()[0], None);
+        assert_ne!(board.shortest_path_cache.borrow()[1], None);
     }
 
     #[test]
