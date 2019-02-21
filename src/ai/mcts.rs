@@ -13,11 +13,13 @@ use crate::board::Player;
 
 const SEARCH_TIME: u128 = 8;
 //const ITERATIONS: u32 = 20000;
-const UCTC: f64 = 1.0;
+const UCTC: f64 = 10000.0;
+
 const UCTW: f64 = 0.0;
 const MOVE_PROBABILITY: f64 = 0.8;
+
 const SIM_THRESHOLD: u32 = 5;
-const PATH_MOVE_SIM_PROBABILTY: f64 = 0.90;
+const SIM_SHORTEST_WALK_BIAS: f64 = 0.9;
 
 const THREADS: u32 = 2;
 
@@ -66,7 +68,7 @@ fn simulate(mut board: Board) -> Player {
         }
 
         // bias towards walking along shortest path
-        if rng.gen_bool(PATH_MOVE_SIM_PROBABILTY) {
+        if rng.gen_bool(SIM_SHORTEST_WALK_BIAS) {
             for child in board.moves_detailed(true, false, false, true) {
                 if child.other_pawn() == *board.shortest_path(board.turn()).first().unwrap()
                 //&& !child.can_win()
@@ -115,9 +117,20 @@ fn solver(node: &Rc<RefCell<Node>>) -> f64 {
         node.expand();
     }
 
-    if node.children.len() == 1 && node.children[0].borrow().board.winner().is_some() {
+    if node.board.can_win() {
         node.update(INFINITY);
         return INFINITY;
+    }
+    if node.board.remaining_walls()[0] == 0 && node.board.remaining_walls()[1] == 1 {
+        if node.board.shortest_path(node.board.turn()).len()
+            <= node.board.shortest_path(node.board.turn().other()).len()
+        {
+            node.update(INFINITY);
+            return INFINITY;
+        } else {
+            node.update(-INFINITY);
+            return -INFINITY;
+        }
     }
 
     let mut selected = &node.children[0];
@@ -162,7 +175,7 @@ fn solver(node: &Rc<RefCell<Node>>) -> f64 {
     }
 
     if r == -INFINITY {
-        for child in &selected.borrow().children {
+        for child in &node.children {
             if child.borrow().value != INFINITY {
                 r = -1.0;
                 break;
