@@ -21,7 +21,7 @@ const MOVE_PROBABILITY: f64 = 0.8;
 const SIM_THRESHOLD: u32 = 5;
 
 const SIM_EXTEND_PATH_BIAS: f64 = 0.1;
-const SIM_EXTEND_PATH_THRESHOLD: usize = 10;
+const SIM_EXTEND_PATH_THRESHOLD: usize = 6;
 const SIM_SHORTEST_WALK_BIAS: f64 = 0.9;
 
 const THREADS: u32 = 2;
