@@ -19,6 +19,9 @@ const UCTW: f64 = 0.0;
 const MOVE_PROBABILITY: f64 = 0.8;
 
 const SIM_THRESHOLD: u32 = 5;
+
+const SIM_EXTEND_PATH_BIAS: f64 = 0.1;
+const SIM_EXTEND_PATH_THRESHOLD: usize = 10;
 const SIM_SHORTEST_WALK_BIAS: f64 = 0.9;
 
 const THREADS: u32 = 2;
@@ -64,6 +67,19 @@ fn simulate(mut board: Board) -> Player {
                 return board.turn();
             } else {
                 return board.turn().other();
+            }
+        }
+
+        if board.remaining_walls()[board.turn() as usize] > 0 && rng.gen_bool(SIM_EXTEND_PATH_BIAS)
+        {
+            let shortest_path = board.shortest_path(board.turn().other()).len();
+            for child in board.moves_detailed(false, true, true, false) {
+                if child.shortest_path(child.turn()).len()
+                    > shortest_path + SIM_EXTEND_PATH_THRESHOLD
+                {
+                    board = child.clone();
+                    continue 'turn;
+                }
             }
         }
 
