@@ -319,17 +319,49 @@ impl Board {
             }
 
             let walls = self.hwalls | self.vwalls;
-            if limit_walls
-                && ((wall_bit << 1) & walls) == 0
-                && ((wall_bit >> 1) & walls) == 0
-                && ((wall_bit << 2) & walls) == 0
-                && ((wall_bit >> 2) & walls) == 0
-                && ((wall_bit << 8) & walls) == 0
-                && ((wall_bit >> 8) & walls) == 0
-                && ((wall_bit << 16) & walls) == 0
-                && ((wall_bit >> 16) & walls) == 0
-            {
-                continue;
+            if limit_walls {
+                let mut adjacent_to_pawn = false;
+                for pawn in [self.turn_pawn(), self.other_pawn()].iter() {
+                    let se_wall = (pawn / 9) * 8 + (pawn % 9);
+                    if i == se_wall {
+                        adjacent_to_pawn = true;
+                        break;
+                    }
+                    if se_wall > 0 {
+                        let sw_wall = se_wall - 1;
+                        if i == sw_wall {
+                            adjacent_to_pawn = true;
+                            break;
+                        }
+                    }
+                    if se_wall > 9 {
+                        let nw_wall = se_wall - 9;
+                        if i == nw_wall {
+                            adjacent_to_pawn = true;
+                            break;
+                        }
+                    }
+                    if se_wall > 8 {
+                        let ne_wall = se_wall - 8;
+                        if i == ne_wall {
+                            adjacent_to_pawn = true;
+                            break;
+                        }
+                    }
+                }
+
+                if !adjacent_to_pawn
+                    && ((wall_bit << 1) & walls) == 0
+                    && ((wall_bit >> 1) & walls) == 0
+                    && ((wall_bit << 2) & walls) == 0
+                    && ((wall_bit >> 2) & walls) == 0
+                    && ((wall_bit << 8) & walls) == 0
+                    && ((wall_bit >> 8) & walls) == 0
+                    && ((wall_bit << 16) & walls) == 0
+                    && ((wall_bit >> 16) & walls) == 0
+                {
+                    continue;
+                }
             }
 
             if (i == 0 || ((wall_bit >> 1) & self.hwalls) == 0)
@@ -827,8 +859,8 @@ mod tests {
     #[test]
     fn basic_limit_walls() {
         let mut board = Board::new();
-        assert_eq!(board.moves_detailed(false, true, true, false).len(), 3);
+        assert_eq!(board.moves_detailed(false, true, true, false).len(), 11);
         board.hwalls = 1 << 36;
-        assert_eq!(board.moves_detailed(false, true, true, false).len(), 17);
+        assert_eq!(board.moves_detailed(false, true, true, false).len(), 25);
     }
 }
