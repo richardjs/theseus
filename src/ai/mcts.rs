@@ -9,7 +9,6 @@ use std::thread;
 use std::time::SystemTime;
 
 use crate::board::Board;
-use crate::board::Player;
 
 const SEARCH_TIME: u128 = 8;
 //const ITERATIONS: u32 = 20000;
@@ -23,6 +22,7 @@ const SIM_THRESHOLD: u32 = 5;
 const SIM_EXTEND_PATH_BIAS: f64 = 0.1;
 const SIM_EXTEND_PATH_THRESHOLD: usize = 6;
 const SIM_SHORTEST_WALK_BIAS: f64 = 0.9;
+const PATH_DIFF_COEFF: f64 = 1.0;
 
 const THREADS: u32 = 2;
 
@@ -55,27 +55,26 @@ impl Node {
     }
 }
 
-fn simulate(mut board: Board) -> Player {
+fn simulate(mut board: Board) -> f64 {
     let mut rng = thread_rng();
+    let turn = board.turn();
 
     'turn: while !board.can_win() {
         // early termination with no walls remaining
         if board.remaining_walls()[0] == 0 && board.remaining_walls()[1] == 0 {
-            if board.shortest_path(board.turn()).len()
-                <= board.shortest_path(board.turn().other()).len()
-            {
-                return board.turn();
-            } else {
-                return board.turn().other();
-            }
+            return board.shortest_path(turn).len() as f64
+                - board.shortest_path(turn.other()).len() as f64;
         }
 
+        /*
         if board.remaining_walls()[board.turn().other() as usize] == 0
             && board.shortest_path(board.turn()).len()
                 <= board.shortest_path(board.turn().other()).len()
         {
-            return board.turn();
+            return board.shortest_path(turn).len() as f64
+                - board.shortest_path(turn.other()).len() as f64;
         }
+        */
 
         if board.remaining_walls()[board.turn() as usize] > 0 && rng.gen_bool(SIM_EXTEND_PATH_BIAS)
         {
@@ -130,7 +129,7 @@ fn simulate(mut board: Board) -> Player {
         board = next.clone();
     }
 
-    return board.turn();
+    return board.shortest_path(turn).len() as f64 - board.shortest_path(turn.other()).len() as f64;
 }
 
 fn solver(node: &Rc<RefCell<Node>>) -> f64 {
@@ -186,11 +185,9 @@ fn solver(node: &Rc<RefCell<Node>>) -> f64 {
         r = -selected.borrow().value;
     } else {
         if selected.borrow().visits < SIM_THRESHOLD {
-            r = if simulate(selected.borrow().board.clone()) == node.board.turn() {
-                1.0
-            } else {
-                -1.0
-            };
+            let path_difference = simulate(selected.borrow().board.clone());
+            r = if path_difference >= 0.0 { 1.0 } else { -1.0 };
+            r += path_difference * PATH_DIFF_COEFF;
             selected.borrow_mut().update(-r);
         } else {
             r = -solver(&Rc::clone(selected));
@@ -200,6 +197,7 @@ fn solver(node: &Rc<RefCell<Node>>) -> f64 {
     if r == -INFINITY {
         for child in &node.children {
             if child.borrow().value != INFINITY {
+                // TODO this might need to be adjusted if PATH_DIFF_COEFF ends up being useful (since |r| can be > 1.0)
                 r = -1.0;
                 break;
             }
