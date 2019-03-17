@@ -44,7 +44,7 @@ impl Node {
     }
 
     fn expand(&mut self) {
-        for child in self.board.moves_detailed(false, true, false, true) {
+        for child in self.board.moves_detailed(false, true, true, true) {
             self.children.push(Rc::new(RefCell::new(Node::new(child))));
         }
     }
@@ -68,6 +68,13 @@ fn simulate(mut board: Board) -> Player {
             } else {
                 return board.turn().other();
             }
+        }
+
+        if board.remaining_walls()[board.turn().other() as usize] == 0
+            && board.shortest_path(board.turn()).len()
+                <= board.shortest_path(board.turn().other()).len()
+        {
+            return board.turn();
         }
 
         if board.remaining_walls()[board.turn() as usize] > 0 && rng.gen_bool(SIM_EXTEND_PATH_BIAS)
