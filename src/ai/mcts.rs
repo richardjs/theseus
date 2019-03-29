@@ -20,7 +20,7 @@ const SIM_THRESHOLD: u32 = 5;
 
 const SIM_EXTEND_PATH_BIAS: f64 = 0.1;
 const SIM_EXTEND_PATH_THRESHOLD: usize = 1;
-const SIM_SHORTEST_WALK_BIAS: f64 = 0.9;
+const SIM_SHORTEST_WALK_BIAS: f64 = 0.5;
 const PATH_DIFF_COEFF: f64 = 1.0;
 
 const THREADS: u32 = 2;
